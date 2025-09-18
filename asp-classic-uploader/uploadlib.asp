@@ -20,11 +20,11 @@ Function ProcessUploadData()
     
     ' Some example processing code (lines before the problematic ones)
     If p.Exists("FileName") Then
-        result("fileName") = p("FileName")
+        result.Item("fileName") = p.Item("FileName")
     End If
     
     If p.Exists("ContentType") Then
-        result("contentType") = p("ContentType")
+        result.Item("contentType") = p.Item("ContentType")
     End If
     
     ' More processing code to reach around line 69
@@ -38,19 +38,19 @@ Function ProcessUploadData()
     ' Line 67
     ' Line 68
     ' THE PROBLEMATIC LINES (around line 69):
-    If p.Exists("IsFile") Then isFile = CBool(p("IsFile"))
-    If p.Exists("Length") Then lengthVal = CLng(p("Length"))
+    If p.Exists("IsFile") Then isFile = CBool(p.Item("IsFile"))
+    If p.Exists("Length") Then lengthVal = CLng(p.Item("Length"))
     
     ' Additional dictionary access that also needs fixing
     If p.Exists("FileName") Then
         Dim fileName
-        fileName = p("FileName")
-        result("processedFileName") = fileName
+        fileName = p.Item("FileName")
+        result.Item("processedFileName") = fileName
     End If
     
     ' Another problematic access
     If p.Exists("ContentType") Then
-        result("processedContentType") = p("ContentType")
+        result.Item("processedContentType") = p.Item("ContentType")
     End If
     
     Set ProcessUploadData = result
