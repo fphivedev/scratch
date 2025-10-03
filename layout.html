@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/picocss/dist/pico.min.css">
+    <title>Web Application Layout</title>
+    <style>
+        body {
+            height: 100vh;
+            margin: 0;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1em;
+            background-color: #f0f0f0;
+        }
+        main {
+            padding: 2em;
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 60px);
+            overflow-y: auto;
+        }
+        .search-input {
+            width: 100px;
+        }
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">App Name/Logo</div>
+        <nav>
+            <ul>
+                <li><a href="#">Home</a></li>
+                <li><a href="#">About</a></li>
+                <li><a href="#">Contact</a></li>
+            </ul>
+        </nav>
+        <input type="text" class="search-input" placeholder="Search">
+    </header>
+    <main>
+        <div class="content-area">
+            <h1>Main Content Area</h1>
+            <form>
+                <label for="complex-search">Complex Search:</label>
+                <input type="text" id="complex-search" placeholder="Enter search terms...">
+                <button type="submit">Search</button>
+            </form>
+            <div class="results">
+                <!-- Dynamic content goes here -->
+            </div>
+        </div>
+    </main>
+</body>
+</html>
