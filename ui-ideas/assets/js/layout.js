@@ -1,19 +1,42 @@
 // Initialize Air Datepicker and demo form handler
 document.addEventListener('DOMContentLoaded', function () {
-  var el = document.getElementById('date');
+  var dateEls = document.querySelectorAll('.js-datepicker');
 
   function initDatepicker() {
     try {
       if (window.AirDatepicker) {
-        new window.AirDatepicker(el, {
-          dateFormat: 'mm/dd/yyyy'
+        // explicit English locale to avoid falling back to system locale (which may be Cyrillic)
+        var enLocale = {
+          days: ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],
+          daysShort: ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],
+          daysMin: ['Su','Mo','Tu','We','Th','Fr','Sa'],
+          months: ['January','February','March','April','May','June','July','August','September','October','November','December'],
+          monthsShort: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+          firstDay: 1,
+          weekHeader: 'Wk'
+        };
+
+        dateEls.forEach(function (el) {
+          new window.AirDatepicker(el, {
+            locale: enLocale,
+            dateFormat: 'dd/MM/yyyy'
+          });
         });
       } else if (window.Datepicker) {
-        new window.Datepicker(el, {
-          formatter: function (date) {
-            if (!date) return '';
-            return new Date(date).toLocaleDateString();
-          }
+        dateEls.forEach(function (el) {
+          new window.Datepicker(el, {
+            language: 'en',
+            dateFormat: 'dd/MM/yyyy',
+            formatter: function (date) {
+              if (!date) return '';
+              // use en-GB to ensure dd/mm/yyyy format regardless of user locale
+              try {
+                return new Date(date).toLocaleDateString('en-GB');
+              } catch (e) {
+                return new Date(date).toLocaleDateString();
+              }
+            }
+          });
         });
       } else {
         console.warn('Air Datepicker not available');
