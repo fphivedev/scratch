@@ -1,0 +1,305 @@
+/* Full width layout container */
+html, body {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    background: var(--bs-light);
+}
+
+/* Override Pico form spacing variables to make inputs more condensed
+   and provide a Bootstrap-like color palette by mapping common variables */
+:root {
+    /* form spacing */
+    --form-element-spacing-vertical: 0.25rem; /* reduce vertical spacing between form elements */
+    --form-element-spacing-horizontal: 0.5rem; /* reduce horizontal spacing */
+    /* Bootstrap 5 default color palette */
+    --bs-primary: #0d6efd;
+    --bs-secondary: #6c757d;
+    --bs-success: #198754;
+    --bs-info: #0dcaf0;
+    --bs-warning: #ffc107;
+    --bs-danger: #dc3545;
+    --bs-light: #f8f9fa;
+    --bs-dark: #212529;
+    /* Map to Pico/common semantic variables so Pico components pick up the Bootstrap palette */
+    --primary: var(--bs-primary) !important;
+    --accent: var(--bs-primary) !important;
+    --muted: var(--bs-secondary) !important;
+    --bg: var(--bs-light) !important;
+    --text: var(--bs-dark) !important;
+    --contrast: #ffffff; /* contrast text colour for primary buttons */
+    --link-color: var(--bs-primary) !important;
+    --success: var(--bs-success) !important;
+    --info: var(--bs-info) !important;
+    --warning: var(--bs-warning) !important;
+    --danger: var(--bs-danger) !important;
+}
+
+/* Ensure form controls have an explicit white background (override Pico transparency) */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="search"],
+input[type="tel"],
+input[type="number"],
+select,
+textarea {
+    background-color: #fff;
+}
+
+/* Card (Bootstrap-like) */
+.card {
+    background: #ffffff;
+    border: 1px solid rgba(0,0,0,0.125);
+    border-radius: 0.375rem; /* 6px */
+    padding: 1rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.03);
+}
+.card > .card-header {
+    font-weight: 600;
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(0,0,0,0.04);
+}
+.card .card-body { padding: 0; }
+
+/* Tabs - style updated to match Bootstrap 5 look */
+.nav-tabs {
+    display: flex;
+    gap: 0.25rem;
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1rem 0;
+    border-bottom: 1px solid #dee2e6; /* bootstrap border */
+}
+    .nav-tabs .nav-item {
+        margin-bottom: -1px; /* pull up so border aligns */
+        padding: 0.5rem 1rem;
+        border-radius: 0.25rem 0.25rem 0 0; /* rounded top corners */
+        background: transparent;
+        cursor: pointer;
+        color: var(--bs-primary);
+        border: 1px solid transparent;
+        transition: color .15s ease-in-out, background-color .15s ease-in-out, border-color .15s ease-in-out;
+        list-style: none;
+    }
+.nav-tabs .nav-item:hover,
+.nav-tabs .nav-item:focus {
+    color: var(--bs-primary);
+    background-color: rgba(13,110,253,0.04);
+    outline: none;
+}
+.nav-tabs .nav-item.active {
+    color: #495057; /* bootstrap body color */
+    background: #fff;
+    border-color: #dee2e6 #dee2e6 transparent; /* left+right top borders visible, bottom transparent */
+    border-bottom-color: transparent;
+}
+
+/* Tab panes use card-body spacing and no extra border */
+.tab-pane { display: none; padding-top: 0.5rem; }
+.tab-pane.active { display: block; }
+
+/* Make the container truly full-width by removing the max-width limit
+   but keep horizontal padding so content doesn't touch the viewport edge */
+.container-max {
+    width: 100%;
+    max-width: none; /* changed from 1200px to allow full width */
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+/* Header styled like Bootstrap simple header example */
+header.site-header {
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+    /* reduce vertical padding so header isn't too tall */
+    padding: 0.25rem 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    background: #fff;
+    min-height: 48px; /* keep consistent clickable area */
+}
+
+/* Left and right header groups */
+.header-left {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    padding-left:1rem;
+}
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding-right: 1rem;
+}
+
+.header-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 700;
+    font-size: 1.05rem;
+}
+
+.nav-links {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.search-wrap {
+    display: flex;
+    align-items: center;
+    height: 32px; /* match input height so alignment is consistent */
+}
+
+/* Tighter header controls: smaller search input and compact links */
+.header-input-search {
+    height: 32px !important;
+    line-height: 1;
+    width: 160px !important;
+    max-width: 30vw;
+    font-size: 0.9rem;
+    border-radius: 4px !important;
+    box-sizing: border-box;
+    vertical-align: middle;
+}
+
+/* Make header links a bit more compact vertically */
+header.site-header .nav-links a {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.95rem;
+    color: var(--text);
+}
+
+/* Ensure the small icon button doesn't increase header height */
+header.site-header a.secondary,
+header.site-header a.contrast {
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 0.6rem;
+    font-size: 0.95rem;
+}
+
+/* Slightly reduce brand icon size for alignment */
+header.site-header .brand i {
+    font-size: 1rem;
+    line-height: 1;
+}
+
+/* Remove extra default margins that can push header taller */
+header.site-header input,
+header.site-header button,
+header.site-header a {
+    margin: 0;
+}
+
+@media (max-width:700px) {
+    .nav-links {
+        display: none;
+    }
+    /* reduce search width on small screens */
+    header.site-header .search-wrap input[type="search"] {
+        width: 120px;
+        max-width: 40vw;
+    }
+}
+
+main {
+    padding: 2rem 0;
+}
+
+.checkout-layout {
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: 2rem;
+    align-items: start;
+}
+
+@media (max-width:900px) {
+    .checkout-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+.sidebar .card {
+    padding: 1rem;
+}
+
+/* Form actions (replaces inline style on button container) */
+.form-actions {
+    margin-top: 1rem;
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Prevent buttons from stretching to full width (override Pico) */
+.form-actions > button,
+.form-actions > .contrast,
+.form-actions > .secondary {
+    width: auto !important;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Ensure the submit button aligns to the end of the form-actions container */
+.form-actions > button[type="submit"] {
+    margin-left: auto;
+}
+
+/* Button link style (maps to Bootstrap's btn-link) */
+.btn-link {
+    background: transparent;
+    border: none;
+    padding: 0;
+    color: var(--bs-primary);
+    text-decoration: underline;
+    cursor: pointer;
+    font-weight: 400;
+}
+.btn-link:hover,
+.btn-link:focus {
+    color: #0b5ed7; /* slightly darker primary on hover */
+    text-decoration: underline;
+}
+
+/* Footer class (replaces inline footer style) */
+.site-footer {
+    padding: 1rem;
+    text-align: center;
+    border-top: 1px solid rgba(0,0,0,0.06);
+}
+
+/* Use flex layout for prices instead of float */
+.sidebar .card ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.sidebar .card ul li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.25rem 0;
+}
+
+.price {
+    float: none;
+    margin-left: 0.5rem;
+}
+
+fieldset legend, label {
+    font-size:0.9rem;
+}
