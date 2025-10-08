@@ -108,7 +108,16 @@ export class SearchPage {
     if (!val) return null;
 
     const isDateLike = type === 'date' || el.classList.contains('date-input') || /date/i.test(el.id || '') || /date/i.test(el.name || '');
-    if (isDateLike) return label + ' is "' + val + '"';
+    if (isDateLike) {
+      const ph = (el.getAttribute('placeholder') || '').toLowerCase();
+      const nm = (el.name || '').toLowerCase();
+      // Heuristics: treat first field as "after/from", second as "before/to"
+      const isAfter = ph.includes('after') || nm.endsWith('1') || nm.includes('after') || nm.includes('from');
+      const isBefore = ph.includes('before') || nm.endsWith('2') || nm.includes('before') || nm.includes('to');
+      if (isAfter) return label + ' on or after "' + val + '"';
+      if (isBefore) return label + ' on or before "' + val + '"';
+      return label + ' is "' + val + '"';
+    }
 
     if (type === 'number' || /^\d+(\.\d+)?$/.test(val)) return label + ' is ' + val;
     if (type === 'email') return label + ' contains "' + val + '"';
