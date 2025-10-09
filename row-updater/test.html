@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Web app (Bootstrap)</title>
+
+    <!-- Air Datepicker CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/air-datepicker@3.3.5/air-datepicker.css" />
+</head>
+<body>  
+<table class="table">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Batch number</th>
+            <th>Due date</th>
+            <th>Notes</th>
+        </tr>
+    </thead>
+    <tbody>
+        <!-- Numeric batch, empty date -->
+        <tr>
+            <td>1</td>
+            <td><input type="text" class="batch-updater" data-workid="1" value="10" data-current-value="10" /></td>
+            <td><div class="date-picker-wrapper"><input type="text" class="js-datepicker batch-due-date-updater" data-workid="1" value="" /></div></td>
+            <td>Already-saved batch=10, no due date</td>
+        </tr>
+
+        <!-- Non-digits in batch (should normalize to digits-only) and dd/MM/yyyy date -->
+        <tr>
+            <td>2</td>
+            <td><input type="text" class="batch-updater" data-workid="2" value="AB-007" /></td>
+            <td><div class="date-picker-wrapper"><input type="text" class="js-datepicker batch-due-date-updater" data-workid="2" value="05/11/2025" /></div></td>
+            <td>Batch contains letters, date in dd/MM/yyyy</td>
+        </tr>
+
+        <!-- Leading zeros, pre-saved date in ISO format -->
+        <tr>
+            <td>3</td>
+            <td><input type="text" class="batch-updater" data-workid="3" value="007" data-current-value="7" /></td>
+            <td><div class="date-picker-wrapper"><input type="text" class="js-datepicker batch-due-date-updater" data-workid="3" value="2025-12-15" data-current-value="2025-12-15" /></div></td>
+            <td>Leading zeros and ISO date already saved</td>
+        </tr>
+
+        <!-- Empty batch, invalid date string (should pass through) -->
+        <tr>
+            <td>4</td>
+            <td><input type="text" class="batch-updater" data-workid="4" value="" /></td>
+            <td><div class="date-picker-wrapper"><input type="text" class="js-datepicker batch-due-date-updater" data-workid="4" value="next week" /></div></td>
+            <td>Empty batch, non-date string</td>
+        </tr>
+
+        <!-- Large batch number, future date -->
+        <tr>
+            <td>5</td>
+            <td><input type="text" class="batch-updater" data-workid="5" value="12345" /></td>
+            <td><div class="date-picker-wrapper"><input type="text" class="js-datepicker batch-due-date-updater" data-workid="5" value="01/01/2026" /></div></td>
+            <td>Large batch, future due date</td>
+        </tr>
+
+        <!-- Pre-saved batch and date, should not re-save unless changed -->
+        <tr>
+            <td>6</td>
+            <td><input type="text" class="batch-updater" data-workid="6" value="42" data-current-value="42" /></td>
+            <td><div class="date-picker-wrapper"><input type="text" class="js-datepicker batch-due-date-updater" data-workid="6" value="10/10/2025" data-current-value="2025-10-10" /></div></td>
+            <td>Pre-saved values</td>
+        </tr>
+    </tbody>
+</table>
+
+
+        <!-- Scripts -->
+        <script src="https://unpkg.com/air-datepicker@3.3.5/air-datepicker.js"></script>
+        
+        <!-- Module entrypoint -->
+        <script src="site.js"></script>
+    </body>
+    </html>
