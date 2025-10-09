@@ -1,0 +1,71 @@
+:root { --row-hover-dur: 120ms; }
+
+/* 1 — Blue */
+.row-hover-1, tr.row-hover-1 {
+  background-color: hsl(210, 90%, 94%);
+  transition: background-color var(--row-hover-dur) ease;
+}
+.row-hover-1:hover { background-color: hsl(210, 90%, 86%); }
+
+/* 2 — Indigo */
+.row-hover-2, tr.row-hover-2 {
+  background-color: hsl(248, 85%, 93%);
+  transition: background-color var(--row-hover-dur) ease;
+}
+.row-hover-2:hover { background-color: hsl(248, 85%, 85%); }
+
+/* 3 — Purple */
+.row-hover-3, tr.row-hover-3 {
+  background-color: hsl(275, 70%, 93%);
+  transition: background-color var(--row-hover-dur) ease;
+}
+.row-hover-3:hover { background-color: hsl(275, 70%, 85%); }
+
+/* 4 — Pink */
+.row-hover-4, tr.row-hover-4 {
+  background-color: hsl(330, 80%, 94%);
+  transition: background-color var(--row-hover-dur) ease;
+}
+.row-hover-4:hover { background-color: hsl(330, 80%, 86%); }
+
+/* 5 — Red */
+.row-hover-5, tr.row-hover-5 {
+  background-color: hsl(0, 75%, 94%);
+  transition: background-color var(--row-hover-dur) ease;
+}
+.row-hover-5:hover { background-color: hsl(0, 75%, 86%); }
+
+/* 6 — Orange */
+.row-hover-6, tr.row-hover-6 {
+  background-color: hsl(30, 90%, 94%);
+  transition: background-color var(--row-hover-dur) ease;
+}
+.row-hover-6:hover { background-color: hsl(30, 90%, 86%); }
+
+/* 7 — Amber */
+.row-hover-7, tr.row-hover-7 {
+  background-color: hsl(42, 90%, 92%);
+  transition: background-color var(--row-hover-dur) ease;
+}
+.row-hover-7:hover { background-color: hsl(42, 90%, 84%); }
+
+/* 8 — Green */
+.row-hover-8, tr.row-hover-8 {
+  background-color: hsl(145, 45%, 92%);
+  transition: background-color var(--row-hover-dur) ease;
+}
+.row-hover-8:hover { background-color: hsl(145, 45%, 84%); }
+
+/* 9 — Teal */
+.row-hover-9, tr.row-hover-9 {
+  background-color: hsl(170, 50%, 92%);
+  transition: background-color var(--row-hover-dur) ease;
+}
+.row-hover-9:hover { background-color: hsl(170, 50%, 84%); }
+
+/* 10 — Slate */
+.row-hover-10, tr.row-hover-10 {
+  background-color: hsl(215, 20%, 93%);
+  transition: background-color var(--row-hover-dur) ease;
+}
+.row-hover-10:hover { background-color: hsl(215, 20%, 85%); }
