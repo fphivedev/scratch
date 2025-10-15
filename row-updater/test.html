@@ -1,80 +1,106 @@
 <!doctype html>
 <html lang="en">
-
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Web app (Bootstrap)</title>
+  <meta charset="utf-8" />
+  <title>Priority Table — Reordered & Colorful 6–10</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root { --row-hover-dur: 120ms; }
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; margin: 2rem; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: .65rem .8rem; border: 1px solid #dee2e6; }
+    thead th { background: #f8f9fa; text-align: left; }
+    tbody tr { cursor: pointer; transition: background-color var(--row-hover-dur) ease; }
 
-    <!-- Air Datepicker CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/air-datepicker@3.3.5/air-datepicker.css" />
+    /* Priority colors (Bootstrap-inspired), reordered for 1..10 */
+    /* 1 — Danger (red) */
+    tr.row-hover-1 { background: #f5c6cb; }
+    tr.row-hover-1:hover { background: #f1b0b7; }
+
+    /* 2 — Warning (amber) */
+    tr.row-hover-2 { background: #ffeeba; }
+    tr.row-hover-2:hover { background: #ffe8a1; }
+
+    /* 3 — Primary (blue) */
+    tr.row-hover-3 { background: #b8daff; }
+    tr.row-hover-3:hover { background: #9fcdff; }
+
+    /* 4 — Info (teal) */
+    tr.row-hover-4 { background: #bee5eb; }
+    tr.row-hover-4:hover { background: #abdde5; }
+
+    /* 5 — Success (green) */
+    tr.row-hover-5 { background: #c3e6cb; }
+    tr.row-hover-5:hover { background: #b1dfbb; }
+
+    /* 6 — Purple */
+    tr.row-hover-6 { background: #e2d9f3; }
+    tr.row-hover-6:hover { background: #d3c2ec; }
+
+    /* 7 — Pink */
+    tr.row-hover-7 { background: #f7d6e6; }
+    tr.row-hover-7:hover { background: #f1c1da; }
+
+    /* 8 — Cyan */
+    tr.row-hover-8 { background: #c8f3ff; }
+    tr.row-hover-8:hover { background: #b3ecff; }
+
+    /* 9 — Lime */
+    tr.row-hover-9 { background: #e3f7c3; }
+    tr.row-hover-9:hover { background: #d4f1a8; }
+
+    /* 10 — Slate-Blue */
+    tr.row-hover-10 { background: #d7e1f5; }
+    tr.row-hover-10:hover { background: #c6d4f0; }
+  </style>
 </head>
-<body>  
-<table class="table">
+<body>
+
+  <h1>Priority Table — Reordered & Colorful 6–10</h1>
+  <p>Priorities mapped as requested: <strong>1 = danger/red</strong>, <strong>2 = warning/amber</strong>, <strong>3 = primary/blue</strong>, <strong>4 = info/teal</strong>, <strong>5 = success/green</strong>, and <strong>6–10 are colorful</strong> (no greys).</p>
+
+  <table>
     <thead>
-        <tr>
-            <th>#</th>
-            <th>Batch number</th>
-            <th>Due date</th>
-            <th>Notes</th>
-        </tr>
+      <tr>
+        <th style="width: 8rem;">Priority</th>
+        <th>Title</th>
+        <th>Owner</th>
+        <th>Status</th>
+      </tr>
     </thead>
     <tbody>
-        <!-- Numeric batch, empty date -->
-        <tr>
-            <td>1</td>
-            <td><input type="text" class="batch-updater" data-workid="1" value="10" data-current-value="10" /></td>
-            <td><div class="date-picker-wrapper"><input type="text" class="js-datepicker batch-due-date-updater" data-workid="1" value="" /></div></td>
-            <td>Already-saved batch=10, no due date</td>
-        </tr>
-
-        <!-- Non-digits in batch (should normalize to digits-only) and dd/MM/yyyy date -->
-        <tr>
-            <td>2</td>
-            <td><input type="text" class="batch-updater" data-workid="2" value="AB-007" /></td>
-            <td><div class="date-picker-wrapper"><input type="text" class="js-datepicker batch-due-date-updater" data-workid="2" value="05/11/2025" /></div></td>
-            <td>Batch contains letters, date in dd/MM/yyyy</td>
-        </tr>
-
-        <!-- Leading zeros, pre-saved date in ISO format -->
-        <tr>
-            <td>3</td>
-            <td><input type="text" class="batch-updater" data-workid="3" value="007" data-current-value="7" /></td>
-            <td><div class="date-picker-wrapper"><input type="text" class="js-datepicker batch-due-date-updater" data-workid="3" value="2025-12-15" data-current-value="2025-12-15" /></div></td>
-            <td>Leading zeros and ISO date already saved</td>
-        </tr>
-
-        <!-- Empty batch, invalid date string (should pass through) -->
-        <tr>
-            <td>4</td>
-            <td><input type="text" class="batch-updater" data-workid="4" value="" /></td>
-            <td><div class="date-picker-wrapper"><input type="text" class="js-datepicker batch-due-date-updater" data-workid="4" value="next week" /></div></td>
-            <td>Empty batch, non-date string</td>
-        </tr>
-
-        <!-- Large batch number, future date -->
-        <tr>
-            <td>5</td>
-            <td><input type="text" class="batch-updater" data-workid="5" value="12345" /></td>
-            <td><div class="date-picker-wrapper"><input type="text" class="js-datepicker batch-due-date-updater" data-workid="5" value="01/01/2026" /></div></td>
-            <td>Large batch, future due date</td>
-        </tr>
-
-        <!-- Pre-saved batch and date, should not re-save unless changed -->
-        <tr>
-            <td>6</td>
-            <td><input type="text" class="batch-updater" data-workid="6" value="42" data-current-value="42" /></td>
-            <td><div class="date-picker-wrapper"><input type="text" class="js-datepicker batch-due-date-updater" data-workid="6" value="10/10/2025" data-current-value="2025-10-10" /></div></td>
-            <td>Pre-saved values</td>
-        </tr>
+      <tr class="row-hover-1">
+        <td>1 (Danger)</td><td>Critical outage: API 500s</td><td>Ada</td><td>Escalated</td>
+      </tr>
+      <tr class="row-hover-2">
+        <td>2 (Warning)</td><td>High latency in checkout</td><td>Ben</td><td>Investigating</td>
+      </tr>
+      <tr class="row-hover-3">
+        <td>3 (Primary)</td><td>Auth session hardening</td><td>Chris</td><td>In Progress</td>
+      </tr>
+      <tr class="row-hover-4">
+        <td>4 (Info)</td><td>Analytics dashboard tweaks</td><td>Dana</td><td>Planned</td>
+      </tr>
+      <tr class="row-hover-5">
+        <td>5 (Success)</td><td>Green-path alerting</td><td>Eli</td><td>Shipped</td>
+      </tr>
+      <tr class="row-hover-6">
+        <td>6 (Purple)</td><td>RBAC migration</td><td>Finn</td><td>Backlog</td>
+      </tr>
+      <tr class="row-hover-7">
+        <td>7 (Pink)</td><td>Marketing copy sweep</td><td>Gus</td><td>Queued</td>
+      </tr>
+      <tr class="row-hover-8">
+        <td>8 (Cyan)</td><td>Webhook retry strategy</td><td>Harper</td><td>Review</td>
+      </tr>
+      <tr class="row-hover-9">
+        <td>9 (Lime)</td><td>Feature flag cleanup</td><td>Indy</td><td>Review</td>
+      </tr>
+      <tr class="row-hover-10">
+        <td>10 (Slate-Blue)</td><td>Deprecation doc tidy</td><td>Jules</td><td>Done</td>
+      </tr>
     </tbody>
-</table>
+  </table>
 
-
-        <!-- Scripts -->
-        <script src="https://unpkg.com/air-datepicker@3.3.5/air-datepicker.js"></script>
-        
-        <!-- Module entrypoint -->
-        <script src="site.js"></script>
-    </body>
-    </html>
+</body>
+</html>
