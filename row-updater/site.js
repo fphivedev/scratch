@@ -45,6 +45,101 @@ function initDatepickers(root){
   }
 }
 
+// RowNavigator: shared logic for moving focus between inputs in table rows
+class RowNavigator {
+    moveToRowInput(currentInput, dir /* 'up'|'down' */) {
+        const currentRow = currentInput.closest('tr');
+        if (!currentRow) return;
+
+        const rowInputs = Array.from(currentRow.querySelectorAll('input:not([type=hidden]):not([disabled])'));
+        const colIndex = Math.max(0, rowInputs.indexOf(currentInput));
+
+        let targetRow = currentRow;
+        while (true) {
+            targetRow = dir === 'down' ? targetRow.nextElementSibling : targetRow.previousElementSibling;
+            if (!targetRow) return; // no more rows
+            if (targetRow.matches('tr') && targetRow.querySelector('input:not([type=hidden]):not([disabled])')) break;
+        }
+
+        const targetInputs = Array.from(targetRow.querySelectorAll('input:not([type=hidden]):not([disabled])'));
+        const target = targetInputs[colIndex] || targetInputs[0];
+        if (target) {
+            target.focus();
+            if (typeof target.select === 'function') target.select();
+        }
+    }
+
+    handleKeyNav(e) {
+        if (e.key === 'ArrowDown' || e.key === 'Down') {
+            e.preventDefault();
+            this.moveToRowInput(e.currentTarget || e.target, 'down');
+        } else if (e.key === 'ArrowUp' || e.key === 'Up') {
+            e.preventDefault();
+            this.moveToRowInput(e.currentTarget || e.target, 'up');
+        }
+    }
+}
+
+// expose a global navigator so different updaters can reuse it
+var ROW_NAVIGATOR = new RowNavigator();
+window.RowNavigator = ROW_NAVIGATOR;
+
+/* ----------------------
+   Shared helpers
+   ---------------------- */
+/**
+ * Create and show a temporary save indicator element after an input
+ * @param {HTMLElement} inputEl - input element to attach after
+ * @param {string} label - text to show inside the indicator
+ * @param {number} duration - how long to keep the indicator visible (ms)
+ * @param {string} [extraClass] - optional additional class to add
+ */
+function createSaveIndicator(inputEl, label = 'Saved', duration = 15000, extraClass = '') {
+    const next = inputEl.nextSibling;
+    if (next?.nodeType === 1 && next.classList?.contains('save-indicator')) next.remove();
+
+    const badge = document.createElement('span');
+    badge.className = `save-indicator save-indicator--enter ${extraClass}`.trim();
+    badge.setAttribute('aria-live', 'polite');
+    badge.innerHTML = `\n    <svg viewBox="0 0 24 24" aria-hidden="true">\n      <path d="M20.285 6.708a1 1 0 0 1 0 1.414l-9.9 9.9a1 1 0 0 1-1.414 0l-4.243-4.243a1 1 0 0 1 1.414-1.414l3.536 3.536 9.193-9.193a1 1 0 0 1 1.414 0z"/>\n    </svg>\n    <span>${label}</span>\n  `;
+    inputEl.insertAdjacentElement('afterend', badge);
+    requestAnimationFrame(() => {
+        badge.classList.remove('save-indicator--enter');
+        badge.classList.add('save-indicator--visible');
+    });
+    setTimeout(() => {
+        badge.classList.remove('save-indicator--visible');
+        badge.classList.add('save-indicator--exit');
+        badge.addEventListener('transitionend', () => badge.remove(), { once: true });
+    }, duration);
+}
+
+function showErrorIndicator(inputEl, label = 'Error', duration = 5000) {
+    createSaveIndicator(inputEl, label, duration, 'save-indicator--error');
+}
+
+/**
+ * Safe fetch wrapper to centralize error logging and header defaults.
+ * Throws when response is not ok to preserve current behavior.
+ */
+async function safeFetch(url, opts = {}) {
+    const defaultOpts = { headers: { Accept: 'application/json' } };
+    try {
+        const res = await fetch(url, Object.assign({}, defaultOpts, opts));
+        if (!res.ok) {
+            const text = await res.text().catch(() => '');
+            console.error('Fetch failed', url, res.status, text);
+            throw new Error(`Fetch failed ${res.status}`);
+        }
+        return res;
+    } catch (err) {
+        console.error('safeFetch error', err, url);
+        throw err;
+    }
+}
+
+
+
 // Class to update the template batch prioritisation
 class BatchUpdater {
     constructor(options = {}) {
@@ -98,10 +193,15 @@ class BatchUpdater {
         input.value = normalized; // keep the digits-only version in the field
         const url = this.saveUrlBuilder(input, normalized);
 
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`Response status: ${response.status}`);
-        this.showSavedIndicator(input, { text: this.indicatorText });
-        input.dataset.currentValue = normalized; // update baseline
+        try {
+            const response = await safeFetch(url);
+            // if we want to inspect JSON: const payload = await response.json().catch(() => null);
+            createSaveIndicator(input, this.indicatorText, this.indicatorDuration);
+            input.dataset.currentValue = normalized; // update baseline
+        } catch (err) {
+            showErrorIndicator(input, 'Save failed');
+            throw err;
+        }
     }
 
     moveToRowInput(currentInput, dir /* 'up'|'down' */) {
@@ -126,7 +226,11 @@ class BatchUpdater {
         }
     }
 
+    // Deprecated: kept for compatibility but navigation is delegated to RowNavigator
     handleKeyNav(e) {
+        if (window.RowNavigator && typeof window.RowNavigator.handleKeyNav === 'function') {
+            return window.RowNavigator.handleKeyNav(e);
+        }
         if (e.key === 'ArrowDown' || e.key === 'Down') {
             e.preventDefault();
             this.moveToRowInput(e.currentTarget || e.target, 'down');
@@ -140,7 +244,12 @@ class BatchUpdater {
         // Baseline current value
         if (input.dataset.currentValue == null) input.dataset.currentValue = this.normalize(input.value);
         // Events
-        input.addEventListener('keydown', this.handleKeyNav.bind(this));
+        // delegate arrow-key navigation to the shared RowNavigator
+        if (window.RowNavigator && typeof window.RowNavigator.handleKeyNav === 'function') {
+            input.addEventListener('keydown', window.RowNavigator.handleKeyNav.bind(window.RowNavigator));
+        } else {
+            input.addEventListener('keydown', this.handleKeyNav.bind(this));
+        }
         input.addEventListener('change', (e) => this.saveBatchNumber(e.currentTarget));
     }
 
@@ -221,16 +330,24 @@ class DateBatchUpdater {
         if (iso === prev) return; // nothing to do
 
         const url = this.saveUrlBuilder(input, iso);
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`Response status: ${response.status}`);
-        this.showSavedIndicator(input, { text: this.indicatorText });
-        input.dataset.currentValue = iso;
+        try {
+            const response = await safeFetch(url);
+            createSaveIndicator(input, this.indicatorText, this.indicatorDuration);
+            input.dataset.currentValue = iso;
+        } catch (err) {
+            showErrorIndicator(input, 'Save failed');
+            throw err;
+        }
     }
 
     attachTo(input) {
         if (input.dataset.currentValue == null) input.dataset.currentValue = this.toIso(input.value);
         input.addEventListener('change', (e) => this.saveDate(e.currentTarget));
-        // optional: handle keyboard Enter
+        // Allow arrow key navigation between rows – use the shared RowNavigator
+        if (window.RowNavigator && typeof window.RowNavigator.handleKeyNav === 'function') {
+            input.addEventListener('keydown', window.RowNavigator.handleKeyNav.bind(window.RowNavigator));
+        }
+        // optional: handle keyboard Enter to trigger save
         input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -254,6 +371,17 @@ window.DATE_BATCH_UPDATER = DATE_BATCH_UPDATER;
 document.addEventListener('DOMContentLoaded', function () {
     if (window.DATE_BATCH_UPDATER) window.DATE_BATCH_UPDATER.init();
 });
+
+/**
+ * Re-initialize updaters/datepickers for dynamically-inserted markup.
+ * Call with a root node to limit scope.
+ */
+function RowUpdaterInit(root = document) {
+    if (window.BATCH_UPDATER) window.BATCH_UPDATER.init(root);
+    if (window.DATE_BATCH_UPDATER) window.DATE_BATCH_UPDATER.init(root);
+    initDatepickers(root);
+}
+window.RowUpdaterInit = RowUpdaterInit;
 
 
 function onlyAllowNumbers(input) {
