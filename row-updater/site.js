@@ -69,13 +69,53 @@ class RowNavigator {
         }
     }
 
+    // Move left/right within the current row, or across rows when needed
+    moveToCol(currentInput, dir /* 'prev'|'next' */) {
+        const currentRow = currentInput.closest('tr');
+        if (!currentRow) return;
+
+        const rowInputs = Array.from(currentRow.querySelectorAll('input:not([type=hidden]):not([disabled])'));
+        const colIndex = Math.max(0, rowInputs.indexOf(currentInput));
+        const delta = dir === 'next' ? 1 : -1;
+        const targetIndex = colIndex + delta;
+
+        if (targetIndex >= 0 && targetIndex < rowInputs.length) {
+            const target = rowInputs[targetIndex];
+            if (target) {
+                target.focus(); if (typeof target.select === 'function') target.select();
+            }
+            return;
+        }
+
+        // If we're past the end/start of the row, move to the next/previous row's first/last input
+        let targetRow = currentRow;
+        while (true) {
+            targetRow = dir === 'next' ? targetRow.nextElementSibling : targetRow.previousElementSibling;
+            if (!targetRow) return; // none available
+            if (targetRow.matches('tr') && targetRow.querySelector('input:not([type=hidden]):not([disabled])')) break;
+        }
+
+        const targetInputs = Array.from(targetRow.querySelectorAll('input:not([type=hidden]):not([disabled])'));
+        const target = dir === 'next' ? targetInputs[0] : targetInputs[targetInputs.length - 1];
+        if (target) {
+            target.focus(); if (typeof target.select === 'function') target.select();
+        }
+    }
+
     handleKeyNav(e) {
-        if (e.key === 'ArrowDown' || e.key === 'Down') {
+        const key = e.key;
+        if (key === 'ArrowDown' || key === 'Down') {
             e.preventDefault();
             this.moveToRowInput(e.currentTarget || e.target, 'down');
-        } else if (e.key === 'ArrowUp' || e.key === 'Up') {
+        } else if (key === 'ArrowUp' || key === 'Up') {
             e.preventDefault();
             this.moveToRowInput(e.currentTarget || e.target, 'up');
+        } else if (key === 'ArrowRight' || key === 'Right') {
+            e.preventDefault();
+            this.moveToCol(e.currentTarget || e.target, 'next');
+        } else if (key === 'ArrowLeft' || key === 'Left') {
+            e.preventDefault();
+            this.moveToCol(e.currentTarget || e.target, 'prev');
         }
     }
 }
@@ -332,10 +372,13 @@ class DateBatchUpdater {
         const url = this.saveUrlBuilder(input, iso);
         try {
             const response = await safeFetch(url);
-            createSaveIndicator(input, this.indicatorText, this.indicatorDuration);
+            // If the input is wrapped (for the calendar icon), place the badge after the wrapper
+            const wrapper = input.closest('.date-picker-wrapper') || input;
+            createSaveIndicator(wrapper, this.indicatorText, this.indicatorDuration);
             input.dataset.currentValue = iso;
         } catch (err) {
-            showErrorIndicator(input, 'Save failed');
+            const wrapper = input.closest('.date-picker-wrapper') || input;
+            showErrorIndicator(wrapper, 'Save failed');
             throw err;
         }
     }
