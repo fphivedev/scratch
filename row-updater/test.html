@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Priority Table — Reordered & Colorful 6–10</title>
+  <title>Priority Table — Lighter base, previous-set as hover, with borders</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root { --row-hover-dur: 120ms; }
@@ -12,52 +12,65 @@
     thead th { background: #f8f9fa; text-align: left; }
     tbody tr { cursor: pointer; transition: background-color var(--row-hover-dur) ease; }
 
-    /* Priority colors (Bootstrap-inspired), reordered for 1..10 */
+    /* Helper: apply the accent border and tint inner cell borders using a CSS variable per row */
+    tbody tr[class^="row-hover-"] {
+      border-left: 4px solid var(--accent, transparent);
+    }
+    /* tint inner borders slightly toward the row's accent */
+    tbody tr[class^="row-hover-"] > td {
+      border-color: color-mix(in srgb, var(--accent, #dee2e6) 25%, #dee2e6);
+    }
+
+    /* === Priority colors ===
+       Base colors are LIGHTER; hover uses your previous set.
+       Also setting --accent as the border color per row.
+    */
+
     /* 1 — Danger (red) */
-    tr.row-hover-1 { background: #f5c6cb; }
-    tr.row-hover-1:hover { background: #f1b0b7; }
+    tr.row-hover-1 { background:#f8d7da; --accent:#f1b0b7; }
+    tr.row-hover-1:hover { background:#f5c6cb; }
 
     /* 2 — Warning (amber) */
-    tr.row-hover-2 { background: #ffeeba; }
-    tr.row-hover-2:hover { background: #ffe8a1; }
+    tr.row-hover-2 { background:#fff3cd; --accent:#ffe8a1; }
+    tr.row-hover-2:hover { background:#ffeeba; }
 
     /* 3 — Primary (blue) */
-    tr.row-hover-3 { background: #b8daff; }
-    tr.row-hover-3:hover { background: #9fcdff; }
+    tr.row-hover-3 { background:#dceeff; --accent:#9fcdff; }
+    tr.row-hover-3:hover { background:#b8daff; }
 
     /* 4 — Info (teal) */
-    tr.row-hover-4 { background: #bee5eb; }
-    tr.row-hover-4:hover { background: #abdde5; }
+    tr.row-hover-4 { background:#d1ecf1; --accent:#abdde5; }
+    tr.row-hover-4:hover { background:#bee5eb; }
 
     /* 5 — Success (green) */
-    tr.row-hover-5 { background: #c3e6cb; }
-    tr.row-hover-5:hover { background: #b1dfbb; }
+    tr.row-hover-5 { background:#d4edda; --accent:#b1dfbb; }
+    tr.row-hover-5:hover { background:#c3e6cb; }
 
     /* 6 — Purple */
-    tr.row-hover-6 { background: #e2d9f3; }
-    tr.row-hover-6:hover { background: #d3c2ec; }
+    tr.row-hover-6 { background:#ede4f8; --accent:#d3c2ec; }
+    tr.row-hover-6:hover { background:#e2d9f3; }
 
     /* 7 — Pink */
-    tr.row-hover-7 { background: #f7d6e6; }
-    tr.row-hover-7:hover { background: #f1c1da; }
+    tr.row-hover-7 { background:#fae6f1; --accent:#f1c1da; }
+    tr.row-hover-7:hover { background:#f7d6e6; }
 
     /* 8 — Cyan */
-    tr.row-hover-8 { background: #c8f3ff; }
-    tr.row-hover-8:hover { background: #b3ecff; }
+    tr.row-hover-8 { background:#e0f9ff; --accent:#b3ecff; }
+    tr.row-hover-8:hover { background:#c8f3ff; }
 
     /* 9 — Lime */
-    tr.row-hover-9 { background: #e3f7c3; }
-    tr.row-hover-9:hover { background: #d4f1a8; }
+    tr.row-hover-9 { background:#f0fbde; --accent:#d4f1a8; }
+    tr.row-hover-9:hover { background:#e3f7c3; }
 
     /* 10 — Slate-Blue */
-    tr.row-hover-10 { background: #d7e1f5; }
-    tr.row-hover-10:hover { background: #c6d4f0; }
+    tr.row-hover-10 { background:#e6edfb; --accent:#c6d4f0; }
+    tr.row-hover-10:hover { background:#d7e1f5; }
   </style>
 </head>
 <body>
 
-  <h1>Priority Table — Reordered & Colorful 6–10</h1>
-  <p>Priorities mapped as requested: <strong>1 = danger/red</strong>, <strong>2 = warning/amber</strong>, <strong>3 = primary/blue</strong>, <strong>4 = info/teal</strong>, <strong>5 = success/green</strong>, and <strong>6–10 are colorful</strong> (no greys).</p>
+  <h1>Priority Table — Lighter + Borders</h1>
+  <p>Base is lighter; hover uses the previous set. Each row has a left accent and tinted borders.</p>
 
   <table>
     <thead>
