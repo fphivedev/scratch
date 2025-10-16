@@ -1,0 +1,9 @@
+<SCRIPT LANGUAGE="VBScript" RUNAT="Server">
+Sub Application_OnStart()
+  Application.Lock
+  Application("SqlBasePath") = "C:\apps\myapp\sql" ' no trailing slash
+  ' Optional: preload a few hot queries on startup:
+  ' Application("sql_cache.orders_report") = ""
+  Application.UnLock
+End Sub
+</SCRIPT>
