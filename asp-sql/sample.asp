@@ -1,5 +1,5 @@
-<!--#include file="/inc/db.asp" -->
-<!--#include file="/inc/sql_loader.asp" -->
+<!--#include file="/incs/db.asp" -->
+<!--#include file="/incs/sql_loader.asp" -->
 <%
 ' Safer: call by key (enforced whitelist) + cached
 Dim sql : sql = LoadSqlByKeyCached("orders_report")

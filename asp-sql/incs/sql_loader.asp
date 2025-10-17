@@ -1,5 +1,4 @@
 <%
-' --- /inc/sql_loader.asp -----------------------------------------------
 ' Security: fixed base folder, explicit whitelist, read-only, caching.
 
 ' Ensures we have a base path
