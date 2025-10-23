@@ -67,20 +67,7 @@ Public Function LoadSqlCached(cacheKey, relativeFile)
 
   LoadSqlCached = txt
 End Function
-
 ' ----------------- WHITELISTED LOADER -----------------
-' Define the only query keys you’ll allow the app to request.
-' Left side is the key used in code, right side is the file on disk.
-Private Function QueryMap()
-  ' You can expand this list as needed
-  ' key -> file
-  Dim m : Set m = Server.CreateObject("Scripting.Dictionary")
-  m.CompareMode = 1 ' TextCompare
-  m.Add "orders_report",      "reports\orders_report.sql"
-  m.Add "customer_summary",   "reports\customer_summary.sql"
-  m.Add "invoice_detail",     "invoices\invoice_detail.sql"
-  Set QueryMap = m
-End Function
 
 ' Load by whitelist key (no file paths in calling code)
 Public Function LoadSqlByKey(key)
