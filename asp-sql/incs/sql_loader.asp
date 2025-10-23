@@ -98,5 +98,218 @@ Public Function LoadSqlByKeyCached(key)
   End If
   LoadSqlByKeyCached = LoadSqlCached(key, map(key))
 End Function
+
+' ----------------- RESULT HELPERS -----------------
+' Convenience helpers to reduce boilerplate when working with
+' the array-of-dictionary results returned by DbQuery / ArrayToObjects.
+'
+' Usage examples:
+'   Dim rows : rows = DbQuery(sql, params)
+'   Dim r : Set r = FirstRow(rows)          ' returns the first Dictionary or Nothing
+'   If Not r Is Nothing Then x = r("col")  ' Dictionary access works as before
+'
+'   x = RowValue(r, "col", "default")     ' safe access with default
+'
+'   Dim vals : vals = ColumnValues(rows, "id") ' returns an array of values for the column
+
+Public Function FirstRow(rows)
+  ' Return the first row object from an array of dictionaries, or Nothing
+  If Not IsArray(rows) Then
+    Set FirstRow = Nothing
+    Exit Function
+  End If
+
+  On Error Resume Next
+  Dim ub : ub = UBound(rows)
+  If Err.Number <> 0 Then
+    Err.Clear
+    Set FirstRow = Nothing
+    Exit Function
+  End If
+
+  If ub < 0 Then
+    Set FirstRow = Nothing
+  Else
+    Set FirstRow = rows(0)
+  End If
+End Function
+
+Public Function RowValue(row, colName, Optional defaultValue)
+  ' Safely return row(colName). If the column or row is missing, return defaultValue
+  ' If defaultValue is omitted the function returns Null when missing.
+  If IsObject(row) Then
+    On Error Resume Next
+    Dim v
+    v = row(colName)
+    If Err.Number <> 0 Then
+      Err.Clear
+      If IsEmpty(defaultValue) Then
+        RowValue = Null
+      Else
+        RowValue = defaultValue
+      End If
+    Else
+      RowValue = v
+    End If
+  Else
+    If IsEmpty(defaultValue) Then
+      RowValue = Null
+    Else
+      RowValue = defaultValue
+    End If
+  End If
+End Function
+
+Public Function ColumnValues(rows, colName)
+  ' Return a simple zero-based array of the values for colName from each row.
+  ' Missing rows or missing columns produce Null entries.
+  If Not IsArray(rows) Then
+    ColumnValues = Array()
+    Exit Function
+  End If
+
+  On Error Resume Next
+  Dim ub : ub = UBound(rows)
+  If Err.Number <> 0 Then
+    Err.Clear
+    ColumnValues = Array()
+    Exit Function
+  End If
+
+  Dim i, vals
+  ReDim vals(ub)
+  For i = 0 To ub
+    On Error Resume Next
+    Dim v
+    v = rows(i)(colName)
+    If Err.Number <> 0 Then
+      Err.Clear
+      v = Null
+    End If
+    vals(i) = v
+  Next
+
+  ColumnValues = vals
+End Function
+
+' Return an array of column names (keys) discovered from the first row Dictionary.
+' If rows is empty or not an array, returns an empty array.
+Public Function GetColumnNames(rows)
+  If Not IsArray(rows) Then
+    GetColumnNames = Array()
+    Exit Function
+  End If
+
+  On Error Resume Next
+  Dim ub : ub = UBound(rows)
+  If Err.Number <> 0 Then
+    Err.Clear
+    GetColumnNames = Array()
+    Exit Function
+  End If
+
+  If ub < 0 Then
+    GetColumnNames = Array()
+    Exit Function
+  End If
+
+  Dim firstRow : Set firstRow = rows(0)
+  If Not IsObject(firstRow) Then
+    GetColumnNames = Array()
+    Exit Function
+  End If
+
+  ' Dictionary.Keys is not directly enumerable in VBScript in all hosts,
+  ' so build the list by iterating Fields from the Dictionary object when available.
+  On Error Resume Next
+  Dim keys, k
+  keys = firstRow.Keys
+  If Err.Number = 0 Then
+    ' keys is a variant array
+    GetColumnNames = keys
+    Exit Function
+  End If
+  Err.Clear
+
+  ' Fallback: attempt to enumerate using For Each on the Dictionary
+  Dim arr(), idx
+  idx = -1
+  ReDim arr(0)
+  On Error Resume Next
+  For Each k In firstRow
+    idx = idx + 1
+    ReDim Preserve arr(idx)
+    arr(idx) = k
+  Next
+  If idx = -1 Then
+    GetColumnNames = Array()
+  Else
+    GetColumnNames = arr
+  End If
+End Function
+
+' RenderTableHtml(rows, Optional cols)
+' Returns an HTML string containing a table built from rows. If cols is provided
+' (array of column names), those columns and their order are used; otherwise
+' column names are discovered from the first row via GetColumnNames.
+' Values are HTML-encoded.
+Public Function RenderTableHtml(rows, Optional cols)
+  Dim out
+  out = ""
+
+  If Not IsArray(rows) Then
+    RenderTableHtml = ""
+    Exit Function
+  End If
+
+  On Error Resume Next
+  Dim ub : ub = UBound(rows)
+  If Err.Number <> 0 Or ub < 0 Then
+    RenderTableHtml = ""
+    Exit Function
+  End If
+
+  Dim columns
+  If IsMissing(cols) Then
+    columns = GetColumnNames(rows)
+  Else
+    columns = cols
+  End If
+
+  If Not IsArray(columns) Or UBound(columns) < 0 Then
+    RenderTableHtml = ""
+    Exit Function
+  End If
+
+  out = out & "<table border=1 cellpadding=6 cellspacing=0>"
+  out = out & "<thead><tr>"
+  Dim c
+  For Each c In columns
+    out = out & "<th>" & Server.HTMLEncode( CStr(c) ) & "</th>"
+  Next
+  out = out & "</tr></thead>"
+  out = out & "<tbody>"
+
+  Dim rIndex, rowObj
+  For rIndex = 0 To ub
+    Set rowObj = rows(rIndex)
+    out = out & "<tr>"
+    For Each c In columns
+      On Error Resume Next
+      Dim v
+      v = rowObj(c)
+      If Err.Number <> 0 Then
+        Err.Clear
+        v = ""
+      End If
+      out = out & "<td>" & Server.HTMLEncode( CStr( v ) ) & "</td>"
+    Next
+    out = out & "</tr>"
+    Set rowObj = Nothing
+  Next
+
+  out = out & "</tbody></table>"
+  RenderTableHtml = out
+End Function
 ' -----------------------------------------------------------------------
 %>
