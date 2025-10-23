@@ -33,25 +33,34 @@ Function DbQuery(sqlText, params)
   End If
 
   Dim rs : Set rs = cmd.Execute()
+  ' Collect field names from the recordset (some providers don't expose cmd.Fields)
+  Dim fieldCount, fi, fieldNames
+  fieldCount = rs.Fields.Count
+  ReDim fieldNames(fieldCount - 1)
+  For fi = 0 To fieldCount - 1
+    fieldNames(fi) = rs.Fields(fi).Name
+  Next
+
   Dim data : data = rs.GetRows() ' fast extraction
   rs.Close: Set rs = Nothing
   cn.Close: Set cn = Nothing
 
-  Set DbQuery = ArrayToObjects(data, cmd) ' convert to [{col:val}, ...]
+  Set DbQuery = ArrayToObjects(data, fieldNames) ' convert to [{col:val}, ...]
 End Function
 
-Function ArrayToObjects(data, cmd)
+Function ArrayToObjects(data, fieldNames)
   Dim rows(), r, c, cols, i
   If IsEmpty(data) Then
     ArrayToObjects = Array()
     Exit Function
   End If
-  cols = cmd.Fields.Count
+
+  cols = UBound(fieldNames) - LBound(fieldNames) + 1
   ReDim rows(UBound(data,2))
   For r = 0 To UBound(data,2)
     Dim o : Set o = Server.CreateObject("Scripting.Dictionary")
-    For c = 0 To cols-1
-      o(cmd.Fields(c).Name) = data(c, r)
+    For c = 0 To UBound(fieldNames)
+      o(fieldNames(c)) = data(c, r)
     Next
     Set rows(r) = o
   Next
