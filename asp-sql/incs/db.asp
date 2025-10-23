@@ -22,13 +22,11 @@ Function DbQuery(sqlText, params)
   If IsArray(params) Then
     For i = 0 To UBound(params)
       p = params(i)
-      ' Some providers expect parameter names without the leading '@'.
 	  if p(2)=3 then
 		cmd.Parameters.Append cmd.CreateParameter(p(0), p(2), 1, , cInt(p(1)))
 	  else 	  
 		cmd.Parameters.Append cmd.CreateParameter(p(0), p(2), 1, p(3), p(1))
 	  end if 
-      cmd.Parameters.Append cmd.CreateParameter(paramName, p(2), 1, p(3), p(1))
       ' 1 = adParamInput
     Next
   End If
