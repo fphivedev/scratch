@@ -23,10 +23,11 @@ Function DbQuery(sqlText, params)
     For i = 0 To UBound(params)
       p = params(i)
       ' Some providers expect parameter names without the leading '@'.
-      Dim paramName : paramName = p(0)
-      If Len(paramName) > 0 Then
-        If Left(paramName,1) = "@" Then paramName = Mid(paramName,2)
-      End If
+	  if p(2)=3 then
+		cmd.Parameters.Append cmd.CreateParameter(p(0), p(2), 1, , cInt(p(1)))
+	  else 	  
+		cmd.Parameters.Append cmd.CreateParameter(p(0), p(2), 1, p(3), p(1))
+	  end if 
       cmd.Parameters.Append cmd.CreateParameter(paramName, p(2), 1, p(3), p(1))
       ' 1 = adParamInput
     Next
