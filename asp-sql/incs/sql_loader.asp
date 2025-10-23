@@ -134,30 +134,35 @@ Public Function FirstRow(rows)
   End If
 End Function
 
-Public Function RowValue(row, colName, Optional defaultValue)
-  ' Safely return row(colName). If the column or row is missing, return defaultValue
-  ' If defaultValue is omitted the function returns Null when missing.
-  If IsObject(row) Then
+Public Function GetRowValue(rowObj, colName, Optional defVal)
+  ' Safely return rowObj(colName). If the column or row is missing, return defVal
+  ' If defVal is omitted the function returns Null when missing.
+  If IsObject(rowObj) Then
     On Error Resume Next
     Dim v
-    v = row(colName)
+    v = rowObj(colName)
     If Err.Number <> 0 Then
       Err.Clear
-      If IsEmpty(defaultValue) Then
-        RowValue = Null
+      If IsEmpty(defVal) Then
+        GetRowValue = Null
       Else
-        RowValue = defaultValue
+        GetRowValue = defVal
       End If
     Else
-      RowValue = v
+      GetRowValue = v
     End If
   Else
-    If IsEmpty(defaultValue) Then
-      RowValue = Null
+    If IsEmpty(defVal) Then
+      GetRowValue = Null
     Else
-      RowValue = defaultValue
+      GetRowValue = defVal
     End If
   End If
+End Function
+
+' Backwards-compatible wrapper
+Public Function RowValue(rowObj, colName, Optional defVal)
+  RowValue = GetRowValue(rowObj, colName, defVal)
 End Function
 
 Public Function ColumnValues(rows, colName)

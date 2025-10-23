@@ -57,10 +57,10 @@ If IsArray(rows) And UBound(rows) >= 0 Then
     Dim rowObj : Set rowObj = rows(rIndex)
     Response.Write "<tr>"
     ' Direct dictionary access works (rowObj("ColumnName"))
-    Response.Write "<td>" & Server.HTMLEncode( CStr( RowValue(rowObj, "OrderID", "") ) ) & "</td>"
-    Response.Write "<td>" & Server.HTMLEncode( CStr( RowValue(rowObj, "CustomerName", "") ) ) & "</td>"
-    Response.Write "<td>" & Server.HTMLEncode( CStr( RowValue(rowObj, "OrderDate", "") ) ) & "</td>"
-    Response.Write "<td style=\"text-align:right\">" & Server.HTMLEncode( CStr( RowValue(rowObj, "TotalAmount", "0.00") ) ) & "</td>"
+  Response.Write "<td>" & Server.HTMLEncode( CStr( GetRowValue(rowObj, "OrderID", "") ) ) & "</td>"
+  Response.Write "<td>" & Server.HTMLEncode( CStr( GetRowValue(rowObj, "CustomerName", "") ) ) & "</td>"
+  Response.Write "<td>" & Server.HTMLEncode( CStr( GetRowValue(rowObj, "OrderDate", "") ) ) & "</td>"
+  Response.Write "<td style=\"text-align:right\">" & Server.HTMLEncode( CStr( GetRowValue(rowObj, "TotalAmount", "0.00") ) ) & "</td>"
     Response.Write "</tr>"
     Set rowObj = Nothing
   Next
