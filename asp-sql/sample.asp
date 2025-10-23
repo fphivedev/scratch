@@ -7,9 +7,7 @@ Dim sql : sql = LoadSqlByKeyCached("orders_report")
 
 ' Parameters example
 Dim p : p = Array( _
-  Array("@From", Request("from"), 135, 0), _  ' adDBTimeStamp
-  Array("@To",   Request("to"),   135, 0), _
-  Array("@Cust", IIf(Request("customer")="", Null, Request("customer")), 202, 50) _
+  Array("@From", Request("from"), 3, 0), _  
 )
 
 Dim rows : rows = DbQuery(sql, p)
