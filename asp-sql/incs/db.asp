@@ -44,7 +44,7 @@ Function DbQuery(sqlText, params)
   rs.Close: Set rs = Nothing
   cn.Close: Set cn = Nothing
 
-  Set DbQuery = ArrayToObjects(data, fieldNames) ' convert to [{col:val}, ...]
+  DbQuery = ArrayToObjects(data, fieldNames) ' convert to [{col:val}, ...]
 End Function
 
 Function ArrayToObjects(data, fieldNames)
