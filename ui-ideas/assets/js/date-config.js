@@ -11,6 +11,7 @@ export const datepicker = {
   },
   options: {
     dateFormat: 'dd/MM/yyyy',
-    autoClose: true
+    autoClose: true,
+    minDate: new Date()
   }
 };
