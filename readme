@@ -1,1 +1,3 @@
 scratch repo
+
+Uploader("notes_document").SaveAs Server.MapPath("documents\" & appealsID & "\" & notes_documentID & "\") & "\" & Uploader.Fields("notes_document").FileName
