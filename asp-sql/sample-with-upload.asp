@@ -15,4 +15,7 @@ Dim p : p = Array( _
 
 Dim rows : rows = DbQuery(sql, p)
 ' ... render rows ...
+
+' Save document upload example
+Uploader("notes_document").SaveAs Server.MapPath("documents\" & appealsID & "\" & notes_documentID & "\") & "\" & Uploader.Fields("notes_document").FileName
 %>
