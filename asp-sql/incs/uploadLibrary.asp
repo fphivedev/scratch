@@ -372,5 +372,15 @@ Class FileUploader
     Set Fields = m_files
   End Property
 
+  ' Return array of all field names (form fields + files)
+  Public Function FieldNames()
+    FieldNames = m_all.Keys
+  End Function
+
+  ' Return array of file-only field names
+  Public Function FileFieldNames()
+    FileFieldNames = m_files.Keys
+  End Function
+
 End Class
 %>

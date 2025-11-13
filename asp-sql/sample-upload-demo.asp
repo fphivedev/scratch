@@ -11,12 +11,29 @@ Dim appealsID, notes_documentID, targetFolder, savedPath
 Dim fld
 Dim safeName
 Dim probeName, probePath, fso, probeErrNum, probeErrDesc, tf
+Dim keys, i, k, item, fieldList
 
 message = ""
 
 If Request.ServerVariables("REQUEST_METHOD") = "POST" Then
   On Error Resume Next
   Set uploader = New FileUploader
+
+  ' Build a small debug listing of all submitted fields (names + values/files)
+  fieldList = ""
+  keys = uploader.FieldNames()
+  If IsArray(keys) Then
+    For i = LBound(keys) To UBound(keys)
+      k = keys(i)
+      Set item = uploader(k)
+      If item.HasFile() Then
+        fieldList = fieldList & k & " (file): " & item.FileName & " - " & item.ContentType & vbCrLf
+      Else
+        fieldList = fieldList & k & ": " & item.Value & vbCrLf
+      End If
+      Set item = Nothing
+    Next
+  End If
 
   fromVal = uploader("from").Value
 
@@ -93,6 +110,10 @@ End If
   <h1>Upload demo</h1>
   <% If Len(message) > 0 Then %>
     <p><strong><%= Server.HTMLEncode(message) %></strong></p>
+  <% End If %>
+  <% If Len(fieldList) > 0 Then %>
+    <h2>Submitted fields</h2>
+    <pre><%= Server.HTMLEncode(fieldList) %></pre>
   <% End If %>
 
   <form method="post" enctype="multipart/form-data">
