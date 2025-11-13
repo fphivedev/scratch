@@ -1,4 +1,5 @@
 <%
+Option Explicit
 ' asp-sql/incs/uploadLibrary.asp
 ' Minimal multipart/form-data parser and FileUploader helper for Classic ASP
 ' Usage:
@@ -7,7 +8,6 @@
 '   ' Save uploaded file:
 '   uploader("notes_document").SaveAs Server.MapPath("documents\" & appealsID & "\" & notes_documentID & "\") & "\" & uploader.Fields("notes_document").FileName
 '
-Option Explicit
 
 ' Configuration: default max upload size (bytes). Can be overridden by Application("MaxUploadBytes")
 Const DEFAULT_MAX_UPLOAD_BYTES = 5 * 1024 * 1024 ' 5 MB
@@ -335,13 +335,14 @@ Class FileUploader
 
   ' Extracts a quoted string like name="value" or filename="file.ext"
   Private Function ExtractQuotedString(s)
-    Dim p1, p2, res
-    p1 = InStr(s, "\"")
+    Dim p1, p2
+    ' find double-quote character
+    p1 = InStr(s, Chr(34))
     If p1 = 0 Then
       ExtractQuotedString = Trim(s)
       Exit Function
     End If
-    p2 = InStr(p1+1, s, "\"")
+    p2 = InStr(p1+1, s, Chr(34))
     If p2 = 0 Then
       ExtractQuotedString = Trim(Mid(s, p1+1))
     Else

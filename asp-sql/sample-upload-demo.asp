@@ -1,33 +1,35 @@
 <!--#include file="/asp-sql/incs/uploadLibrary.asp" -->
 <%
-' Simple demo page for uploadLibrary
 Option Explicit
+' Simple demo page for uploadLibrary
 
+' Explicit variable declarations to satisfy Option Explicit
 Dim message
+Dim uploader
+Dim fromVal
+Dim appealsID, notes_documentID, targetFolder, savedPath
+Dim fld
+Dim safeName
+
 message = ""
 
 If Request.ServerVariables("REQUEST_METHOD") = "POST" Then
   On Error Resume Next
-  Dim uploader
   Set uploader = New FileUploader
 
-  Dim fromVal
   fromVal = uploader("from").Value
 
   ' target folder for demo saves (relative to site root)
-  Dim appealsID, notes_documentID, targetFolder, savedPath
   appealsID = "demo"  ' for demo purposes
   notes_documentID = "1"
   targetFolder = Server.MapPath("/uploads/demo/" & appealsID & "/" & notes_documentID & "/")
 
-  Dim fld
   Set fld = uploader("notes_document")
   If fld.HasFile() Then
     If fld.Error Then
       message = "Upload rejected: " & fld.ErrorMessage
     Else
       ' safe filename
-      Dim safeName
       safeName = fld.FileName
       If Len(Trim(safeName)) = 0 Then safeName = "upload.bin"
       savedPath = targetFolder & safeName
