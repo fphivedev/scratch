@@ -235,89 +235,101 @@ Class FileUploader
         ' skip empty part
       Else
         ' strip leading CRLF
-        If Left(part,2) = vbCrLf Then part = Mid(part,3)
-      ' strip trailing -- or CRLF
-      If Right(part,2) = "--" Then part = Left(part, Len(part)-2)
-      ' find header/body separator
-      Dim hdrEnd
-      hdrEnd = InStr(part, vbCrLf & vbCrLf)
-      If hdrEnd = 0 Then Continue For
-      Dim hdrText, bodyText
-      hdrText = Left(part, hdrEnd - 1)
-      bodyText = Mid(part, hdrEnd + 4)
-      ' remove trailing CRLF
-      If Right(bodyText,2) = vbCrLf Then bodyText = Left(bodyText, Len(bodyText)-2)
-
-      ' parse headers
-      Dim hlines
-      hlines = Split(hdrText, vbCrLf)
-      Dim name, filename, ctype
-      name = ""
-      filename = ""
-      ctype = ""
-      Dim h
-      For Each h In hlines
-        Dim l
-        l = Trim(h)
-        If LCase(Left(l,19)) = "content-disposition" Then
-          ' parse name and filename
-          Dim nmPos
-          nmPos = InStr(l, "name=")
-          If nmPos > 0 Then
-            name = ExtractQuotedString(Mid(l, nmPos))
-          End If
-          Dim fnPos
-          fnPos = InStr(l, "filename=")
-          If fnPos > 0 Then
-            filename = ExtractQuotedString(Mid(l, fnPos))
-          End If
-        ElseIf LCase(Left(l,12)) = "content-type" Then
-          Dim colon
-          colon = InStr(l, ":")
-          If colon > 0 Then
-            ctype = Trim(Mid(l, colon+1))
-          End If
+        If Left(part,2) = vbCrLf Then
+          part = Mid(part,3)
         End If
-      Next
 
-      Dim fld
-      Set fld = New UploadField
-      fld.Name = name
-      fld.FileName = filename
-      fld.ContentType = ctype
+        ' strip trailing -- or CRLF
+        If Right(part,2) = "--" Then
+          part = Left(part, Len(part)-2)
+        End If
 
-      If Len(Trim(filename)) > 0 Then
-        ' file part - obtain binary from bodyText
-        Dim byts
-        byts = StringToBytes(bodyText)
-        Call fld.SetBinary(byts)
-        ' sanitize filename
-        fld.FileName = SanitizeFileName(filename)
-
-        ' size check
-        Dim blen
-        If IsEmpty(byts) Then
-          blen = 0
+        ' find header/body separator
+        Dim hdrEnd
+        hdrEnd = InStr(part, vbCrLf & vbCrLf)
+        If hdrEnd = 0 Then
+          ' skip this part without headers
         Else
-          blen = (UBound(byts) - LBound(byts) + 1)
-        End If
-        If blen > MaxUploadBytes() Then
-          fld.Error = True
-          fld.ErrorMessage = "File exceeds maximum allowed size"
-          fld.FileName = ""
-        Else
-          fld.Error = False
-          fld.ErrorMessage = ""
-          ' add to file dict
-          If Not m_files.Exists(name) Then m_files.Add name, fld
-        End If
-      Else
-        ' form field
-        fld.Value = bodyText
-      End If
+          Dim hdrText, bodyText
+          hdrText = Left(part, hdrEnd - 1)
+          bodyText = Mid(part, hdrEnd + 4)
 
-      If Not m_all.Exists(name) Then m_all.Add name, fld
-      End If
+          ' remove trailing CRLF
+          If Right(bodyText,2) = vbCrLf Then
+            bodyText = Left(bodyText, Len(bodyText)-2)
+          End If
+
+          ' parse headers
+          Dim hlines
+          hlines = Split(hdrText, vbCrLf)
+          Dim name, filename, ctype
+          name = ""
+          filename = ""
+          ctype = ""
+          Dim h
+          For Each h In hlines
+            Dim l
+            l = Trim(h)
+            If LCase(Left(l,19)) = "content-disposition" Then
+              ' parse name and filename
+              Dim nmPos
+              nmPos = InStr(l, "name=")
+              If nmPos > 0 Then
+                name = ExtractQuotedString(Mid(l, nmPos))
+              End If
+              Dim fnPos
+              fnPos = InStr(l, "filename=")
+              If fnPos > 0 Then
+                filename = ExtractQuotedString(Mid(l, fnPos))
+              End If
+            ElseIf LCase(Left(l,12)) = "content-type" Then
+              Dim colon
+              colon = InStr(l, ":")
+              If colon > 0 Then
+                ctype = Trim(Mid(l, colon+1))
+              End If
+            End If
+          Next
+
+          Dim fld
+          Set fld = New UploadField
+          fld.Name = name
+          fld.FileName = filename
+          fld.ContentType = ctype
+
+          If Len(Trim(filename)) > 0 Then
+            ' file part - obtain binary from bodyText
+            Dim byts
+            byts = StringToBytes(bodyText)
+            Call fld.SetBinary(byts)
+            ' sanitize filename
+            fld.FileName = SanitizeFileName(filename)
+
+            ' size check
+            Dim blen
+            If IsEmpty(byts) Then
+              blen = 0
+            Else
+              blen = (UBound(byts) - LBound(byts) + 1)
+            End If
+            If blen > MaxUploadBytes() Then
+              fld.Error = True
+              fld.ErrorMessage = "File exceeds maximum allowed size"
+              fld.FileName = ""
+            Else
+              fld.Error = False
+              fld.ErrorMessage = ""
+              ' add to file dict
+              If Not m_files.Exists(name) Then m_files.Add name, fld
+            End If
+          Else
+            ' form field
+            fld.Value = bodyText
+          End If
+
+          If Not m_all.Exists(name) Then m_all.Add name, fld
+        End If ' hdrEnd
+      End If ' part empty
     Next
   End Sub
 
