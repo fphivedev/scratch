@@ -231,9 +231,11 @@ Class FileUploader
     For i = 0 To UBound(parts)
       Dim part
       part = parts(i)
-      If Len(Trim(part)) = 0 Then Continue For
-      ' strip leading CRLF
-      If Left(part,2) = vbCrLf Then part = Mid(part,3)
+      If Len(Trim(part)) = 0 Then
+        ' skip empty part
+      Else
+        ' strip leading CRLF
+        If Left(part,2) = vbCrLf Then part = Mid(part,3)
       ' strip trailing -- or CRLF
       If Right(part,2) = "--" Then part = Left(part, Len(part)-2)
       ' find header/body separator
@@ -315,6 +317,7 @@ Class FileUploader
       End If
 
       If Not m_all.Exists(name) Then m_all.Add name, fld
+      End If
     Next
   End Sub
 
