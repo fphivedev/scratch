@@ -1,6 +1,6 @@
 <!--#include file="/asp-sql/incs/uploadLibrary.asp" -->
-<%
-Option Explicit
+'<%
+ ' Option Explicit is provided by the included uploadLibrary to avoid duplicate declarations
 ' Simple demo page for uploadLibrary
 
 ' Explicit variable declarations to satisfy Option Explicit
@@ -10,6 +10,7 @@ Dim fromVal
 Dim appealsID, notes_documentID, targetFolder, savedPath
 Dim fld
 Dim safeName
+Dim probeName, probePath, fso, probeErrNum, probeErrDesc, tf
 
 message = ""
 
@@ -33,13 +34,44 @@ If Request.ServerVariables("REQUEST_METHOD") = "POST" Then
       safeName = fld.FileName
       If Len(Trim(safeName)) = 0 Then safeName = "upload.bin"
       savedPath = targetFolder & safeName
+
+      ' Probe write permission by trying to create a zero-byte temp file
+      probeErrNum = 0
+      probeErrDesc = ""
       On Error Resume Next
-      fld.SaveAs savedPath
+      Set fso = Server.CreateObject("Scripting.FileSystemObject")
+      probeName = "__probe__" & Replace(CStr(Timer()), ".", "") & ".tmp"
+      probePath = targetFolder & probeName
+      Set tf = Nothing
+      If Not fso Is Nothing Then
+        Set tf = fso.CreateTextFile(probePath, True)
+      End If
       If Err.Number <> 0 Then
-        message = "Save failed: " & Err.Description
+        probeErrNum = Err.Number
+        probeErrDesc = Err.Description
         Err.Clear
       Else
-        message = "Saved as: " & Server.HTMLEncode(savedPath)
+        If Not tf Is Nothing Then tf.Write "": tf.Close
+        ' attempt to remove probe file
+        On Error Resume Next
+        If Not fso Is Nothing Then fso.DeleteFile probePath, True
+        Err.Clear
+      End If
+      Set tf = Nothing
+      Set fso = Nothing
+
+      If probeErrNum <> 0 Then
+        message = "Write-probe failed: Err " & probeErrNum & " - " & probeErrDesc & " (target folder: " & Server.HTMLEncode(targetFolder) & ")"
+      Else
+        ' Now attempt to save the uploaded file; report Err.Number/Description on failure
+        On Error Resume Next
+        fld.SaveAs savedPath
+        If Err.Number <> 0 Then
+          message = "Save failed: Err " & Err.Number & " - " & Err.Description & " (target path: " & Server.HTMLEncode(savedPath) & ")"
+          Err.Clear
+        Else
+          message = "Saved as: " & Server.HTMLEncode(savedPath)
+        End If
       End If
     End If
   Else

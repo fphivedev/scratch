@@ -10,7 +10,8 @@ Option Explicit
 '
 
 ' Configuration: default max upload size (bytes). Can be overridden by Application("MaxUploadBytes")
-Const DEFAULT_MAX_UPLOAD_BYTES = 5 * 1024 * 1024 ' 5 MB
+' VBScript Const requires a literal; compute 5*1024*1024 = 5242880
+Const DEFAULT_MAX_UPLOAD_BYTES = 5242880 ' 5 MB
 
 ' Helper: convert byte array to string using ISO-8859-1 (single-byte) preservation
 Private Function BytesToString(byts)
@@ -92,7 +93,7 @@ Private Sub EnsureFolderExists(folderPath)
     Set fso = Nothing
     Exit Sub
   End If
-  parts = Split(folderPath, "\\")
+  parts = Split(folderPath, "\")
   cur = parts(0)
   ' If absolute path like C:\... keep the first element
   For i = 1 To UBound(parts)
