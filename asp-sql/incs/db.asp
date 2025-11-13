@@ -3,6 +3,7 @@
 Const adCmdText = 1
 Const adOpenForwardOnly = 0
 Const adLockReadOnly = 1
+Const adStateOpen = 1
 
 Function DbConn()
   Dim cn : Set cn = Server.CreateObject("ADODB.Connection")
@@ -31,20 +32,88 @@ Function DbQuery(sqlText, params)
     Next
   End If
 
-  Dim rs : Set rs = cmd.Execute()
-  ' Collect field names from the recordset (some providers don't expose cmd.Fields)
-  Dim fieldCount, fi, fieldNames
-  fieldCount = rs.Fields.Count
-  ReDim fieldNames(fieldCount - 1)
-  For fi = 0 To fieldCount - 1
-    fieldNames(fi) = rs.Fields(fi).Name
-  Next
+  Dim rs, recordsAffected
+  Set rs = Nothing
+  recordsAffected = 0
+  On Error Resume Next
+  ' Capture optional recordsAffected; some providers return no recordset for non-SELECT statements
+  Set rs = cmd.Execute(recordsAffected)
+  If Err.Number <> 0 Then
+    ' Clear any provider-specific error and continue — we'll handle missing recordset below
+    Err.Clear
+  End If
 
-  Dim data : data = rs.GetRows() ' fast extraction
-  rs.Close: Set rs = Nothing
+  ' If a recordset object was returned and is open, read rows. Otherwise return an empty array.
+  If (IsObject(rs) And Not rs Is Nothing) Then
+    If rs.State = adStateOpen Then
+      ' Collect field names from the recordset (some providers don't expose cmd.Fields)
+      Dim fieldCount, fi, fieldNames
+      fieldCount = rs.Fields.Count
+      ReDim fieldNames(fieldCount - 1)
+      For fi = 0 To fieldCount - 1
+        fieldNames(fi) = rs.Fields(fi).Name
+      Next
+
+      Dim data : data = rs.GetRows() ' fast extraction
+      rs.Close: Set rs = Nothing
+      cn.Close: Set cn = Nothing
+
+      DbQuery = ArrayToObjects(data, fieldNames) ' convert to [{col:val}, ...]
+      Exit Function
+    End If
+  End If
+
+  ' No recordset returned (e.g. INSERT/UPDATE/DELETE). Clean up and return empty array.
+  If Not rs Is Nothing Then
+    On Error Resume Next
+    rs.Close
+    Set rs = Nothing
+    Err.Clear
+  End If
   cn.Close: Set cn = Nothing
+  DbQuery = Array()
+End Function
 
-  DbQuery = ArrayToObjects(data, fieldNames) ' convert to [{col:val}, ...]
+' Execute a non-SELECT statement (INSERT/UPDATE/DELETE) and return the number of records affected
+' Params format is the same as DbQuery: Array(Array("name","value","type","size"))
+Function DbExecute(sqlText, params)
+  Dim cn, cmd, i, p, rs, recordsAffected
+  Set cn = DbConn()
+  Set cmd = Server.CreateObject("ADODB.Command")
+  Set cmd.ActiveConnection = cn
+  cmd.CommandType = adCmdText
+  cmd.CommandText = sqlText
+
+  If IsArray(params) Then
+    For i = 0 To UBound(params)
+      p = params(i)
+      If p(2) = 3 Then
+        cmd.Parameters.Append cmd.CreateParameter(p(0), p(2), 1, , CLng(p(1)))
+      Else
+        cmd.Parameters.Append cmd.CreateParameter(p(0), p(2), 1, p(3), p(1))
+      End If
+    Next
+  End If
+
+  recordsAffected = 0
+  Set rs = Nothing
+  On Error Resume Next
+  Set rs = cmd.Execute(recordsAffected)
+  If Err.Number <> 0 Then
+    ' swallow provider-specific warnings/errors; we'll return recordsAffected (0) on failure
+    Err.Clear
+  End If
+
+  ' If an unexpected recordset was returned, close it
+  If IsObject(rs) And Not rs Is Nothing Then
+    On Error Resume Next
+    If rs.State = adStateOpen Then rs.Close
+    Set rs = Nothing
+    Err.Clear
+  End If
+
+  cn.Close: Set cn = Nothing
+  DbExecute = CLng(recordsAffected)
 End Function
 
 Function ArrayToObjects(data, fieldNames)
