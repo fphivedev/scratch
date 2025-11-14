@@ -182,3 +182,60 @@ End Sub
 Private Function Nz(v) As String
     If IsNull(v) Or IsEmpty(v) Then Nz = "" Else Nz = CStr(v)
 End Function
+
+
+
+
+
+
+
+------------
+
+
+
+
+
+'=== Replace MERGEFIELDs named <fieldName> anywhere (body, headers, footers) ===
+Private Sub SetMerge(ByVal fieldName As String, ByVal value As String)
+    Dim sr As Range: Set sr = ActiveDocument.StoryRanges(wdMainTextStory)
+    Do
+        ReplaceMergeFieldsInRange sr, fieldName, value
+        Set sr = sr.NextStoryRange
+    Loop Until sr Is Nothing
+End Sub
+
+Private Sub ReplaceMergeFieldsInRange(ByVal rng As Range, ByVal fieldName As String, ByVal value As String)
+    Dim f As Field
+    For Each f In rng.Fields
+        If f.Type = wdFieldMergeField Then
+            If LCase$(GetMergeFieldName(f)) = LCase$(fieldName) Then
+                ' Replace the field with plain text (no prompts, no data source needed)
+                Dim r As Range: Set r = f.Result
+                f.Unlink               ' turn field into its current result
+                r.Text = value         ' then overwrite that result text
+            End If
+        End If
+    Next f
+End Sub
+
+Private Function GetMergeFieldName(ByVal fld As Field) As String
+    ' fld.Code.Text looks like: " MERGEFIELD  name  \* MERGEFORMAT "
+    ' or: " MERGEFIELD  ""name""  \* MERGEFORMAT "
+    Dim t As String: t = Trim$(fld.Code.Text)
+    t = Replace$(t, "MERGEFIELD", "", , , vbTextCompare)
+    t = Trim$(t)
+    ' strip optional quotes and switches
+    Dim parts() As String: parts = Split(t, " \")
+    Dim raw As String: raw = Trim$(parts(0))
+    If Left$(raw, 1) = """" And Right$(raw, 1) = """" Then
+        raw = Mid$(raw, 2, Len(raw) - 2)
+    End If
+    GetMergeFieldName = raw
+End Function
+
+
+
+--------
+
+SetMerge "name", Nz(rs.Fields("name").Value)
+SetMerge "description", Nz(rs.Fields("description").Value)
