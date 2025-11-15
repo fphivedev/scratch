@@ -1,280 +1,40 @@
-Option Explicit
-
-Private Sub Document_New()
-    On Error GoTo ohno
-
-    Dim id As Long: id = 17  ' <- change or prompt for this
-    Dim cn As ADODB.Connection, cmd As ADODB.Command, rs As ADODB.Recordset
-
-    Set cn = New ADODB.Connection
-    ' For SQL Server / Azure SQL (AAD or SQL Auth – pick one):
-    ' Integrated Security example:
-    'cn.Open "Provider=SQLOLEDB;Data Source=YOURSERVER;Initial Catalog=YOURDB;Integrated Security=SSPI;"
-    ' SQL auth example:
-    'cn.Open "Provider=SQLOLEDB;Data Source=YOURSERVER;Initial Catalog=YOURDB;User ID=USER;Password=PWD;"
-
-    ' Azure SQL with OLE DB Driver 19 (if installed):
-    'cn.Open "Provider=MSOLEDBSQL;Server=tcp:YOURSERVER.database.windows.net,1433;Database=YOURDB;User ID=USER;Password=PWD;Encrypt=yes;TrustServerCertificate=no;"
-
-    ' TODO: pick ONE and configure it:
-    cn.Open "Provider=MSOLEDBSQL;Server=tcp:YOURSERVER;Database=YOURDB;Integrated Security=SSPI;Encrypt=yes;TrustServerCertificate=no;"
-
-    Set cmd = New ADODB.Command
-    Set cmd.ActiveConnection = cn
-    cmd.CommandText = "SELECT name, description FROM dbo.YourTable WHERE id = ?"
-    cmd.Parameters.Append cmd.CreateParameter("id", adInteger, adParamInput, , id)
-
-    Set rs = cmd.Execute
-    If Not rs.EOF Then
-        SetCC "name", Nz(rs.Fields("name").Value)
-        SetCC "description", Nz(rs.Fields("description").Value)
-    Else
-        MsgBox "No record found for id=" & id, vbExclamation
-    End If
-
-cleanup:
-    On Error Resume Next
-    If Not rs Is Nothing Then rs.Close
-    If Not cn Is Nothing Then cn.Close
-    Set rs = Nothing: Set cmd = Nothing: Set cn = Nothing
-    Exit Sub
-
-ohno:
-    MsgBox "Error: " & Err.Number & " - " & Err.Description, vbCritical
-    Resume cleanup
-End Sub
-
-Private Sub SetCC(ByVal tag As String, ByVal textVal As String)
-    Dim cc As ContentControl
-    For Each cc In ActiveDocument.ContentControls
-        If LCase$(cc.Tag) = LCase$(tag) Then
-            cc.Range.Text = textVal
-            Exit For
-        End If
-    Next cc
-End Sub
-
-Private Function Nz(v) As String
-    If IsNull(v) Or IsEmpty(v) Then Nz = "" Else Nz = CStr(v)
-End Function
-
-
-
-
-
-
-
-
----------
-
-
-Option Explicit
-
-'========================
-' Entry points
-'========================
-Private Sub Document_New()
-    ' New doc from template: often named "Document1" until saved.
-    ' We enforce filename-only: if no id token, we do nothing.
-    TryFillFromFilename
-End Sub
-
-Private Sub Document_Open()
-    ' When opening a saved/renamed doc, we try again.
-    TryFillFromFilename
-End Sub
-
-Private Sub TryFillFromFilename()
-    On Error GoTo ohno
-
-    Dim recId As Variant
-    recId = ExtractIdFromName(ActiveDocument.Name) ' strictly from filename
-
-    If IsEmpty(recId) Then
-        ' No fallback, no prompts. Exit silently.
-        Exit Sub
-    End If
-
-    ' Found an ID in the filename; go fill the fields.
-    FillFromDatabase CLng(recId)
-    Exit Sub
-
-ohno:
-    ' Silent failure is an option; keep a MsgBox if you want dev visibility.
-    'MsgBox "Error: " & Err.Number & " - " & Err.Description, vbCritical
-End Sub
-
-'========================
-' ID extraction (filename-only, strict)
-'========================
-' Convention: filename must contain token "id###"
-' Examples: "Case id17 - Intake.docx", "id42.docx", "ABC_id123_X.docx"
-' Matches "id=17", "id:17", "id-17", "id17" etc.
-Private Function ExtractIdFromName(ByVal fileName As String) As Variant
-    Dim re As Object, m As Object
-    Set re = CreateObject("VBScript.RegExp")
-    re.Global = False
-    re.IgnoreCase = True
-    re.Pattern = "\bid\s*[:=\-_]?\s*(\d+)\b" ' requires the literal token "id"
-    If re.Test(fileName) Then
-        Set m = re.Execute(fileName)(0)
-        ExtractIdFromName = CLng(m.SubMatches(0))
-    Else
-        ExtractIdFromName = Empty
-    End If
-End Function
-
-'========================
-' Database fill
-'========================
-Private Sub FillFromDatabase(ByVal id As Long)
-    On Error GoTo ohno
-
-    Dim cn As Object, cmd As Object, rs As Object
-    Set cn = CreateObject("ADODB.Connection")
-    Set cmd = CreateObject("ADODB.Command")
-
-    ' --- Pick and configure ONE connection string below ---
-    ' SQL Server / Azure SQL via OLE DB Driver 19:
-    cn.Open "Provider=MSOLEDBSQL;" & _
-            "Server=tcp:YOURSERVER;Database=YOURDB;" & _
-            "Integrated Security=SSPI;Encrypt=yes;TrustServerCertificate=no;"
-
-    ' SQL authentication example:
-    'cn.Open "Provider=MSOLEDBSQL;Server=tcp:YOURSERVER;Database=YOURDB;User ID=USER;Password=PWD;Encrypt=yes;TrustServerCertificate=no;"
-
-    Set cmd.ActiveConnection = cn
-    cmd.CommandText = "SELECT name, description FROM dbo.YourTable WHERE id = ?"
-    cmd.Parameters.Append cmd.CreateParameter("id", 3, 1, , id) ' 3=adInteger, 1=adParamInput
-
-    Set rs = cmd.Execute
-    If Not rs.EOF Then
-        SetCC "name", Nz(rs.Fields("name").Value)
-        SetCC "description", Nz(rs.Fields("description").Value)
-    End If
-
-cleanup:
-    On Error Resume Next
-    If Not rs Is Nothing Then rs.Close
-    If Not cn Is Nothing Then cn.Close
-    Set rs = Nothing: Set cmd = Nothing: Set cn = Nothing
-    Exit Sub
-
-ohno:
-    ' Optional dev visibility:
-    'MsgBox "DB error: " & Err.Number & " - " & Err.Description, vbCritical
-    Resume cleanup
-End Sub
-
-'========================
-' Helpers
-'========================
-Private Sub SetCC(ByVal tag As String, ByVal textVal As String)
-    Dim cc As ContentControl
-    For Each cc In ActiveDocument.ContentControls
-        If LCase$(cc.Tag) = LCase$(tag) Then
-            cc.Range.Text = textVal
-            Exit For
-        End If
-    Next cc
-End Sub
-
-Private Function Nz(v) As String
-    If IsNull(v) Or IsEmpty(v) Then Nz = "" Else Nz = CStr(v)
-End Function
-
-
-
-
-
-
-
-------------
-
-
-
-
-
-'=== Replace MERGEFIELDs named <fieldName> anywhere (body, headers, footers) ===
-Private Sub SetMerge(ByVal fieldName As String, ByVal value As String)
-    Dim sr As Range: Set sr = ActiveDocument.StoryRanges(wdMainTextStory)
-    Do
-        ReplaceMergeFieldsInRange sr, fieldName, value
-        Set sr = sr.NextStoryRange
-    Loop Until sr Is Nothing
-End Sub
-
-Private Sub ReplaceMergeFieldsInRange(ByVal rng As Range, ByVal fieldName As String, ByVal value As String)
-    Dim f As Field
-    For Each f In rng.Fields
-        If f.Type = wdFieldMergeField Then
-            If LCase$(GetMergeFieldName(f)) = LCase$(fieldName) Then
-                ' Replace the field with plain text (no prompts, no data source needed)
-                Dim r As Range: Set r = f.Result
-                f.Unlink               ' turn field into its current result
-                r.Text = value         ' then overwrite that result text
-            End If
-        End If
-    Next f
-End Sub
-
-Private Function GetMergeFieldName(ByVal fld As Field) As String
-    ' fld.Code.Text looks like: " MERGEFIELD  name  \* MERGEFORMAT "
-    ' or: " MERGEFIELD  ""name""  \* MERGEFORMAT "
-    Dim t As String: t = Trim$(fld.Code.Text)
-    t = Replace$(t, "MERGEFIELD", "", , , vbTextCompare)
-    t = Trim$(t)
-    ' strip optional quotes and switches
-    Dim parts() As String: parts = Split(t, " \")
-    Dim raw As String: raw = Trim$(parts(0))
-    If Left$(raw, 1) = """" And Right$(raw, 1) = """" Then
-        raw = Mid$(raw, 2, Len(raw) - 2)
-    End If
-    GetMergeFieldName = raw
-End Function
-
-
-
---------
-
-SetMerge "name", Nz(rs.Fields("name").Value)
-SetMerge "description", Nz(rs.Fields("description").Value)
-
-
-
-
-
------
-
-
-Private Sub Document_New()
-    TryFillFromTemplateName
-End Sub
-
-Private Sub Document_Open()
-    TryFillFromTemplateName
-End Sub
-
-Private Sub TryFillFromTemplateName()
-    On Error Resume Next
-    Dim tName As String: tName = ActiveDocument.AttachedTemplate.Name  ' e.g. createletter[id17].dotm
-    Dim recId As Variant: recId = ExtractIdFromString(tName)
-    If IsEmpty(recId) Then Exit Sub      ' no fallback, exit silently
-    FillFromDatabase CLng(recId)         ' your existing DB code
-End Sub
-
-' Matches id17, id-17, id=17, [id17], etc.
-Private Function ExtractIdFromString(ByVal s As String) As Variant
-    Dim re As Object, m As Object
-    Set re = CreateObject("VBScript.RegExp")
-    re.Global = False
-    re.IgnoreCase = True
-    re.Pattern = "\bid\s*[:=\-_]?\s*(\d+)\b"
-    If re.Test(s) Then
-        Set m = re.Execute(s)(0)
-        ExtractIdFromString = CLng(m.SubMatches(0))
-    Else
-        ExtractIdFromString = Empty
-    End If
-End Function
-
+<form id="myForm" method="post" enctype="multipart/form-data" action="process.asp">
+  <label><input type="checkbox" name="colors" value="red"> Red</label>
+  <label><input type="checkbox" name="colors" value="green"> Green</label>
+  <label><input type="checkbox" name="colors" value="blue"> Blue</label>
+
+  <label><input type="checkbox" name="fruits" value="apple"> Apple</label>
+  <label><input type="checkbox" name="fruits" value="orange"> Orange</label>
+  <label><input type="checkbox" name="fruits" value="banana"> Banana</label>
+
+  <button type="submit">Submit</button>
+</form>
+
+<script>
+function renameCheckboxesAsArrays(form) {
+  // Group checkboxes by their base name
+  const groups = {};
+
+  form.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+    if (!groups[cb.name]) groups[cb.name] = [];
+    groups[cb.name].push(cb);
+  });
+
+  // For each group of checkboxes, rename checked ones as indexed arrays
+  for (const [baseName, checkboxes] of Object.entries(groups)) {
+    let index = 0;
+    checkboxes.forEach(cb => {
+      if (cb.checked) {
+        cb.name = `${baseName}[${index++}]`;
+      } else {
+        cb.disabled = true; // prevent unselected from being sent
+      }
+    });
+  }
+}
+
+// Hook it to the submit event
+document.getElementById("myForm").addEventListener("submit", function (e) {
+  renameCheckboxesAsArrays(this);
+});
+</script>
