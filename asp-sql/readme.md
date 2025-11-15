@@ -239,3 +239,42 @@ End Function
 
 SetMerge "name", Nz(rs.Fields("name").Value)
 SetMerge "description", Nz(rs.Fields("description").Value)
+
+
+
+
+
+-----
+
+
+Private Sub Document_New()
+    TryFillFromTemplateName
+End Sub
+
+Private Sub Document_Open()
+    TryFillFromTemplateName
+End Sub
+
+Private Sub TryFillFromTemplateName()
+    On Error Resume Next
+    Dim tName As String: tName = ActiveDocument.AttachedTemplate.Name  ' e.g. createletter[id17].dotm
+    Dim recId As Variant: recId = ExtractIdFromString(tName)
+    If IsEmpty(recId) Then Exit Sub      ' no fallback, exit silently
+    FillFromDatabase CLng(recId)         ' your existing DB code
+End Sub
+
+' Matches id17, id-17, id=17, [id17], etc.
+Private Function ExtractIdFromString(ByVal s As String) As Variant
+    Dim re As Object, m As Object
+    Set re = CreateObject("VBScript.RegExp")
+    re.Global = False
+    re.IgnoreCase = True
+    re.Pattern = "\bid\s*[:=\-_]?\s*(\d+)\b"
+    If re.Test(s) Then
+        Set m = re.Execute(s)(0)
+        ExtractIdFromString = CLng(m.SubMatches(0))
+    Else
+        ExtractIdFromString = Empty
+    End If
+End Function
+
