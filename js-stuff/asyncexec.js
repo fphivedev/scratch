@@ -1,17 +1,16 @@
 (function () {
-  // Ensure a toast container exists (for Bootstrap toasts)
-function ensureToastContainer() {
-  let container = document.getElementById('toast-container');
-  if (!container) {
-    container = document.createElement('div');
-    container.id = 'toast-container';
-    // Bottom-right, stack upward with spacing
-    container.className = 'toast-container position-fixed bottom-0 end-0 p-3 d-flex flex-column align-items-end gap-2';
-    document.body.appendChild(container);
+  function ensureToastContainer() {
+    let container = document.getElementById('toast-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'toast-container';
+      // bottom-right, stack upward
+      container.className =
+        'toast-container position-fixed bottom-0 end-0 p-3 d-flex flex-column align-items-end gap-2';
+      document.body.appendChild(container);
+    }
+    return container;
   }
-  return container;
-}
-
 
   function showBootstrapToast(message, title = 'Notice') {
     const container = ensureToastContainer();
@@ -67,16 +66,31 @@ function ensureToastContainer() {
 
     try {
       const res = await fetch(url, { method: 'GET' });
-      const text = (await res.text()).trim() || 'OK';
+      let text = await res.text();
+      let content = text.trim();
+
+      // Try to parse JSON if possible
+      try {
+        const json = JSON.parse(content);
+        if (typeof json === 'object') {
+          content =
+            json.message ||
+            json.status ||
+            (json.success ? 'Success' : 'Done') ||
+            JSON.stringify(json);
+        }
+      } catch {
+        // not JSON, just plain text
+      }
 
       if (el.classList.contains('show-toast')) {
         const label = el.textContent?.trim() || 'Notice';
-        showBootstrapToast(text, label);
+        showBootstrapToast(content, label);
       } else {
-        // default or show-badge
-        showBadge(el, text);
+        showBadge(el, content);
       }
-    } catch {
+    } catch (error) {
+      console.error('Async action failed:', error);
       if (el.classList.contains('show-toast')) {
         showBootstrapToast('Request failed', 'Error');
       } else {
@@ -85,13 +99,17 @@ function ensureToastContainer() {
     }
   }
 
-  // Single delegated listener
+  // Single delegated listener (no init timing issues)
   document.addEventListener('click', (evt) => {
     const el = evt.target.closest('.action-async-result');
     if (!el) return;
-    // optional: prevent double clicks spamming
+
+    // prevent spam
     if (el.dataset._busy === '1') return;
     el.dataset._busy = '1';
-    handleAsync(el).finally(() => { el.dataset._busy = '0'; });
+
+    handleAsync(el).finally(() => {
+      el.dataset._busy = '0';
+    });
   });
 })();
