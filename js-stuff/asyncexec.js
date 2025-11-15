@@ -1,15 +1,17 @@
 (function () {
   // Ensure a toast container exists (for Bootstrap toasts)
-  function ensureToastContainer() {
-    let container = document.getElementById('toast-container');
-    if (!container) {
-      container = document.createElement('div');
-      container.id = 'toast-container';
-      container.className = 'toast-container position-fixed top-0 end-0 p-3';
-      document.body.appendChild(container);
-    }
-    return container;
+function ensureToastContainer() {
+  let container = document.getElementById('toast-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toast-container';
+    // Bottom-right, stack upward with spacing
+    container.className = 'toast-container position-fixed bottom-0 end-0 p-3 d-flex flex-column align-items-end gap-2';
+    document.body.appendChild(container);
   }
+  return container;
+}
+
 
   function showBootstrapToast(message, title = 'Notice') {
     const container = ensureToastContainer();
