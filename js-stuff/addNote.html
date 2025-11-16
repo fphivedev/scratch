@@ -37,3 +37,30 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 </script>
+
+
+
+
+<%
+' Example: safe JSON output using JScript interop
+Response.ContentType = "application/json"
+
+Dim notesId, notesText, notesDate
+notesId = 21
+notesText = "This is the text with ""quotes"""
+notesDate = "01/01/2025"
+
+' Use JScript to safely encode JSON
+%>
+<script language="JScript" runat="server">
+function EncodeJSON(id, text, date) {
+  return JSON.stringify({
+    noteId: id,
+    noteText: text,
+    noteDate: date
+  });
+}
+</script>
+<%
+Response.Write(EncodeJSON(notesId, notesText, notesDate))
+%>
