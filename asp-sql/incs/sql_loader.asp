@@ -86,6 +86,158 @@ Public Function LoadSqlByKeyCached(key)
   LoadSqlByKeyCached = LoadSqlCached(key, map(key))
 End Function
 
+' ----------------- SQL TEMPLATE RENDERING -----------------
+' RenderSql(template, replacements)
+' - template: string containing {{token}} placeholders (e.g. {{fileLocation}})
+' - replacements: either a Scripting.Dictionary of key->value or an array of pairs [[key,value], ...]
+' Returns the template with all tokens replaced (case-insensitive token name).
+Public Function RenderSql(template, replacements)
+  On Error Resume Next
+  If IsObject(replacements) Then
+    Dim k
+    For Each k In replacements.Keys
+      template = Replace(template, "{{" & k & "}}", CStr(replacements(k)), 1, -1, vbTextCompare)
+    Next
+  ElseIf IsArray(replacements) Then
+    Dim i, pair
+    For i = 0 To UBound(replacements)
+      pair = replacements(i)
+      If IsArray(pair) Then
+        If UBound(pair) >= 1 Then
+          template = Replace(template, "{{" & CStr(pair(0)) & "}}", CStr(pair(1)), 1, -1, vbTextCompare)
+        End If
+      End If
+    Next
+  End If
+  RenderSql = template
+End Function
+
+' Convenience: load SQL by key and render tokens using replacements (Dictionary or array)
+Public Function LoadSqlByKeyRendered(key, replacements)
+  Dim raw
+  raw = LoadSqlByKey(key)
+  LoadSqlByKeyRendered = RenderSql(raw, replacements)
+End Function
+
+' Cached variant: load cached SQL then render tokens
+Public Function LoadSqlByKeyCachedRendered(key, replacements)
+  Dim raw
+  raw = LoadSqlByKeyCached(key)
+  LoadSqlByKeyCachedRendered = RenderSql(raw, replacements)
+End Function
+
+' ----------------- ENVIRONMENT REPLACEMENT HELPERS -----------------
+' GetEnvReplacements(envName)
+' - Looks up a Scripting.Dictionary of replacements for the given environment.
+' - Supported Application settings (in order of precedence):
+'   1) Application("SqlEnvMap") -> a Dictionary where keys are env names and values are Dictionaries of replacements
+'   2) Application("SqlEnv.<envName>") -> a Dictionary of replacements for that specific env
+' Returns: a Dictionary object (Set) or Nothing if not configured.
+Public Function GetEnvReplacements(envName)
+  On Error Resume Next
+  Set GetEnvReplacements = Nothing
+  If Len(Trim(CStr(envName))) = 0 Then Exit Function
+
+  Dim map
+  ' Option 1: Application("SqlEnvMap") is a Dictionary of Dictionaries
+  If IsObject(Application("SqlEnvMap")) Then
+    Set map = Application("SqlEnvMap")
+    If map.Exists(envName) Then
+      Set GetEnvReplacements = map(envName)
+      Exit Function
+    End If
+  End If
+
+  ' Option 2: Application("SqlEnv.<envName>") holds a replacements Dictionary directly
+  If Not IsEmpty(Application("SqlEnv." & envName)) Then
+    If IsObject(Application("SqlEnv." & envName)) Then
+      Set GetEnvReplacements = Application("SqlEnv." & envName)
+      Exit Function
+    End If
+  End If
+
+  ' nothing found
+End Function
+
+' Load SQL by key and apply environment replacements (non-cached)
+Public Function LoadSqlByKeyForEnv(key, envName)
+  Dim raw
+  raw = LoadSqlByKey(key)
+  Dim repl
+  Set repl = GetEnvReplacements(envName)
+  If IsObject(repl) Then
+    LoadSqlByKeyForEnv = RenderSql(raw, repl)
+  Else
+    LoadSqlByKeyForEnv = raw
+  End If
+End Function
+
+' Load SQL by key (cached) and apply environment replacements
+Public Function LoadSqlByKeyCachedForEnv(key, envName)
+  Dim raw
+  raw = LoadSqlByKeyCached(key)
+  Dim repl
+  Set repl = GetEnvReplacements(envName)
+  If IsObject(repl) Then
+    LoadSqlByKeyCachedForEnv = RenderSql(raw, repl)
+  Else
+    LoadSqlByKeyCachedForEnv = raw
+  End If
+End Function
+
+' Load and cache rendered SQL per environment. This ensures the rendered SQL
+' (after applying environment-specific replacements) is stored separately
+' for each environment so subsequent requests don't re-render on every call.
+' Cache key format: "sql_cache.<key>.<envName>"
+Public Function LoadSqlByKeyCachedForEnvRendered(key, envName)
+  Dim cacheKey, txt
+  cacheKey = "sql_cache." & key & "." & envName
+  txt = Application(cacheKey)
+
+  If IsEmpty(txt) Or Len(txt)=0 Then
+    Application.Lock
+    txt = Application(cacheKey)
+    If IsEmpty(txt) Or Len(txt)=0 Then
+      Dim raw
+      raw = LoadSqlByKeyCached(key) ' raw SQL is cached by key
+      Dim repl
+      Set repl = GetEnvReplacements(envName)
+      If IsObject(repl) Then
+        txt = RenderSql(raw, repl)
+      Else
+        txt = raw
+      End If
+      Application(cacheKey) = txt
+    End If
+    Application.UnLock
+  End If
+
+  LoadSqlByKeyCachedForEnvRendered = txt
+End Function
+
+' -----------------------------------------------------------------------
+' Sample configuration (e.g. in Global.asa Application_OnStart):
+'   Dim envMap, devMap, qaMap, prodMap
+'   Set envMap = Server.CreateObject("Scripting.Dictionary")
+'   Set devMap = Server.CreateObject("Scripting.Dictionary")
+'   devMap.Add "fileLocation", "C:\dev\files"
+'   Set qaMap = Server.CreateObject("Scripting.Dictionary")
+'   qaMap.Add "fileLocation", "C:\qa\files"
+'   Set prodMap = Server.CreateObject("Scripting.Dictionary")
+'   prodMap.Add "fileLocation", "C:\prod\files"
+'   envMap.Add "dev", devMap
+'   envMap.Add "qa", qaMap
+'   envMap.Add "prod", prodMap
+'   Application.Lock
+'   Set Application("SqlEnvMap") = envMap
+'   Application.UnLock
+'
+' Usage example:
+'   Dim sql
+'   sql = LoadSqlByKeyCachedForEnvRendered("getFilesByLocation", "prod")
+'   rows = DbQuery(sql, Null)
+' -----------------------------------------------------------------------
+
 ' ----------------- RESULT HELPERS -----------------
 ' Convenience helpers to reduce boilerplate when working with
 ' the array-of-dictionary results returned by DbQuery / ArrayToObjects.
