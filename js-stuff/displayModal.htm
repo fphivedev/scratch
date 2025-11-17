@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Bootstrap Modal JSON Loader</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Bootstrap 5 CSS -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+    integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+    crossorigin="anonymous"
+  />
+</head>
+<body class="p-4">
+
+  <button id="openModalBtn" class="btn btn-primary">
+    Load data into modal
+  </button>
+
+  <!-- Modal -->
+  <div class="modal fade" id="dataModal" tabindex="-1" aria-labelledby="dataModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 class="modal-title fs-5" id="dataModalLabel">Loaded Data</h1>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="dataContainer">
+          <!-- Content filled dynamically -->
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap 5 JS (includes Popper) -->
+  <script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+    crossorigin="anonymous">
+  </script>
+
+  <script>
+    // >>> Replace with your own endpoint
+    const DATA_URL = 'https://jsonplaceholder.typicode.com/todos/1';
+    // Example above returns:
+    // { "userId": 1, "id": 1, "title": "delectus aut autem", "completed": false }
+
+    const openBtn = document.getElementById('openModalBtn');
+    const modalEl = document.getElementById('dataModal');
+    const dataContainer = document.getElementById('dataContainer');
+    const bsModal = new bootstrap.Modal(modalEl);
+
+    openBtn.addEventListener('click', async () => {
+      // Open the modal immediately with a loading state
+      dataContainer.innerHTML = '<div class="text-muted">Loading…</div>';
+      bsModal.show();
+
+      try {
+        const res = await fetch(DATA_URL, { headers: { 'Accept': 'application/json' } });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+
+        // Normalize: if the API returns an array, show the first item; otherwise use object directly
+        const obj = Array.isArray(json) ? (json[0] ?? {}) : json;
+
+        // Clear and rebuild the body
+        dataContainer.innerHTML = '';
+
+        // If it's truly key-value pairs:
+        if (obj && typeof obj === 'object' && Object.keys(obj).length > 0) {
+          for (const [key, value] of Object.entries(obj)) {
+            const p = document.createElement('p');
+            // Ensure safe text output; stringify non-primitives
+            const valText = (value !== null && typeof value === 'object') ? JSON.stringify(value) : String(value);
+            p.textContent = `${key} - ${valText}`;
+            dataContainer.appendChild(p);
+          }
+        } else {
+          const p = document.createElement('p');
+          p.className = 'text-muted';
+          p.textContent = 'No data to display.';
+          dataContainer.appendChild(p);
+        }
+
+      } catch (err) {
+        dataContainer.innerHTML = `
+          <div class="alert alert-danger" role="alert">
+            Failed to load data: ${err.message}
+          </div>`;
+      }
+    });
+  </script>
+</body>
+</html>
