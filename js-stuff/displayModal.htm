@@ -43,62 +43,25 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
   <script>
-    const BASE_URL = 'https://jsonplaceholder.typicode.com/todos/'; // Replace with your real endpoint
-    const modalEl = document.getElementById('dataModal');
-    const dataContainer = document.getElementById('dataContainer');
-    const bsModal = new bootstrap.Modal(modalEl);
+ // site.js (type="module")
+import { launchNotesModal } from './notesModal.js';
 
-    /**
-     * Launches the Bootstrap modal and loads JSON data from the given ID.
-     * @param {string|number} id - The data ID to load from the API.
-     */
-    async function launchNotesModal(id) {
-      const dataUrl = `${BASE_URL}${encodeURIComponent(id)}`;
+document.addEventListener('click', (event) => {
+  const trigger = event.target.closest('.action-launch-notes-modal');
+  if (!trigger) return;
 
-      // Show modal immediately
-      dataContainer.innerHTML = '<div class="text-muted">Loading…</div>';
-      bsModal.show();
+  const id = trigger.dataset.id;
+  if (!id) {
+    alert('Missing data-id attribute.');
+    return;
+  }
 
-      try {
-        const res = await fetch(dataUrl, { headers: { 'Accept': 'application/json' } });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const json = await res.json();
-        const obj = Array.isArray(json) ? (json[0] ?? {}) : json;
+  // Optional: pass custom selectors or baseUrl per page/component
+  // launchNotesModal(id, { baseUrl: '/api/notes/' });
 
-        dataContainer.innerHTML = '';
+  launchNotesModal(id);
+});
 
-        if (obj && typeof obj === 'object' && Object.keys(obj).length > 0) {
-          for (const [key, value] of Object.entries(obj)) {
-            const p = document.createElement('p');
-            const valText = (value !== null && typeof value === 'object')
-              ? JSON.stringify(value)
-              : String(value);
-            p.textContent = `${key} - ${valText}`;
-            dataContainer.appendChild(p);
-          }
-        } else {
-          dataContainer.innerHTML = '<p class="text-muted">No data available.</p>';
-        }
-
-      } catch (err) {
-        dataContainer.innerHTML = `
-          <div class="alert alert-danger" role="alert">
-            Failed to load data: ${err.message}
-          </div>`;
-      }
-    }
-
-    // Event delegation for any `.action-launch-notes-modal`
-    document.addEventListener('click', (event) => {
-      const btn = event.target.closest('.action-launch-notes-modal');
-      if (!btn) return;
-      const id = btn.dataset.id;
-      if (id) {
-        launchNotesModal(id);
-      } else {
-        alert('Missing data-id attribute.');
-      }
-    });
   </script>
 </body>
 </html>
