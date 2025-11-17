@@ -1,0 +1,70 @@
+<!-- Example HTML -->
+<button class="edit-action-notes" data-id="21">Edit Note</button>
+
+<form id="noteForm">
+  <input type="hidden" name="noteId" id="noteId" />
+  <input type="text" name="notesText" id="notesText" />
+  <input type="text" name="noteDate" id="noteDate" />
+</form>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  // Attach click handler to all current and future elements with the class
+  document.body.addEventListener("click", async (event) => {
+    const btn = event.target.closest(".edit-action-notes");
+    if (!btn) return; // Not a matching element
+
+    const noteId = btn.dataset.id;
+    if (!noteId) return;
+
+    try {
+      // Fetch JSON data for that note
+      const response = await fetch(`async.asp?action=getNote&id=${noteId}`);
+      if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+
+      const data = await response.json();
+
+      // Update form fields
+      document.querySelector("#noteId").value = data.noteId || "";
+      document.querySelector("#notesText").value = data.noteText || "";
+      document.querySelector("#noteDate").value = data.noteDate || "";
+
+      console.log("Form updated with note:", data);
+    } catch (err) {
+      console.error("Error fetching note:", err);
+      alert("Failed to load note details.");
+    }
+  });
+});
+</script>
+
+
+
+
+<%
+Response.ContentType = "application/json"
+
+Function EscapeJSON(str)
+    If IsNull(str) Then str = ""
+    str = Replace(str, "\", "\\")
+    str = Replace(str, """", "\""")
+    str = Replace(str, "/", "\/")
+    str = Replace(str, vbCrLf, "\n")
+    str = Replace(str, vbLf, "\n")
+    str = Replace(str, vbCr, "\n")
+    str = Replace(str, vbTab, "\t")
+    EscapeJSON = str
+End Function
+
+Dim noteId, noteText, noteDate
+noteId = 21
+noteText = "This is the text with ""quotes"" and newlines."
+noteDate = "01/01/2025"
+
+Response.Write "{"
+Response.Write """noteId"": " & noteId & ","
+Response.Write """noteText"": """ & EscapeJSON(noteText) & ""","
+Response.Write """noteDate"": """ & EscapeJSON(noteDate) & """"
+Response.Write "}"
+%>
+
