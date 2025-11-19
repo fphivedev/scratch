@@ -173,17 +173,21 @@ class SearchAndSave {
         if (j && j.success) {
           this._emit('addSuccess', j, el);
           await this.loadAddedResults();
+          // refresh search results so the UI reflects the newly-added item
+          await this.loadSearchResults();
         } else {
           console.warn('add endpoint returned non-success JSON', j);
           this._emit('addError', j, el);
           // still reload to be safe
           await this.loadAddedResults();
+          await this.loadSearchResults();
         }
       } else {
         // If non-json, treat it as HTML or text and reload the added list after
-        const txt = await resp.text();
-        this._emit('addSuccess', txt, el);
-        await this.loadAddedResults();
+  const txt = await resp.text();
+  this._emit('addSuccess', txt, el);
+  await this.loadAddedResults();
+  await this.loadSearchResults();
       }
     } catch (err) {
       console.error('handleAddAndReload error', err);
