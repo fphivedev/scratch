@@ -54,15 +54,19 @@ export function showBootstrapToast(message, title = 'Notice', className = '') {
 
 export function showBadge(el, content) {
   if (!el) return;
-  let badge = el.querySelector('.badge');
-  if (!badge) {
+  
+  // Look for existing badge next to the element (sibling)
+  let badge = el.nextElementSibling;
+  if (!badge || !badge.classList.contains('badge')) {
     badge = document.createElement('span');
-    badge.className = 'badge';
-    el.appendChild(badge);
+    badge.className = 'badge bg-secondary ms-2';
+    // Insert badge as next sibling
+    el.parentNode.insertBefore(badge, el.nextSibling);
   }
+  
   badge.style.transition = '';
   badge.style.opacity = '1';
-  badge.textContent = `[${content}]`;
+  badge.textContent = content;
 
   setTimeout(() => {
     badge.style.transition = 'opacity 1s';
