@@ -1,3 +1,7 @@
 <script src="site-init.js" type="module"></script>
-<span class="action-async-result show-badge btn btn-sm" data-url="/api/status"></span><!-- doesn't work-->
-<span class="action-async-result show-toast btn btn-sm" data-url="/api/status"></span><!-- does work-->
+<span class="action-async-result show-badge btn btn-sm" data-url="/api/status"></span>
+<span class="action-async-result show-toast btn btn-sm" data-url="/api/status"></span>
+<span class="action-async-group">
+    <span class="action-async-result show-replacement btn btn-sm" data-url="/api/status"></span>
+    <span class="action-async-replacement d-none"><!-- response --></span>
+</span>

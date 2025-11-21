@@ -30,6 +30,16 @@ export async function handleAsync(el) {
       showBootstrapToast('Request failed', 'Error', 'bg-danger-subtle border border-danger-subtle');
     } else if (el.classList.contains('show-badge')) {
       showBadge(el, 'Error');
+    } else if (el.classList.contains('show-replacement')) {
+      // For replacement mode, show error in the replacement container
+      const group = el.closest('.action-async-group');
+      if (group) {
+        const replacement = group.querySelector('.action-async-replacement');
+        if (replacement) {
+          replacement.innerHTML = '<span class="text-danger">Error loading content</span>';
+          replacement.classList.remove('d-none');
+        }
+      }
     }
     return;
   }
@@ -49,6 +59,19 @@ export async function handleAsync(el) {
     showBootstrapToast(content, label, className);
   } else if (el.classList.contains('show-badge')) {
     showBadge(el, content);
+  } else if (el.classList.contains('show-replacement')) {
+    // Find the parent group and replacement element
+    const group = el.closest('.action-async-group');
+    if (group) {
+      const replacement = group.querySelector('.action-async-replacement');
+      if (replacement) {
+        // Load content into replacement element
+        replacement.innerHTML = content;
+        // Show replacement and hide trigger
+        replacement.classList.remove('d-none');
+        el.classList.add('d-none');
+      }
+    }
   }
 }
 
