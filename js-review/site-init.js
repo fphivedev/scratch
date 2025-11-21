@@ -1,6 +1,6 @@
 import { SearchPage } from './search-page.js';
 import { datepicker } from './date-config.js';
-import { initNotificationModal } from './launch-notification-module.js';
+import { initModalLoader } from './launch-modal.js';
 import { initAutoLoadHtml } from './load-html-into-element.js';
 import { fetchInit } from './fetch.js';
 import { initDatepickers } from './date-init.js';
@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initAutoLoadHtml();
 
   // Initialise notification modal launcher (delegated handler)
-  initNotificationModal();
+  initModalLoader();
 
   // Initialise the search form (if this is the search form)
   // Otherwise initialise the rest of the site elements
