@@ -28,7 +28,7 @@ export async function handleAsync(el) {
   if (!result.ok) {
     if (el.classList.contains('show-toast')) {
       showBootstrapToast('Request failed', 'Error', 'bg-danger-subtle border border-danger-subtle');
-    } else {
+    } else if (el.classList.contains('show-badge')) {
       showBadge(el, 'Error');
     }
     return;
@@ -47,7 +47,7 @@ export async function handleAsync(el) {
   if (el.classList.contains('show-toast')) {
     const label = el.textContent?.trim() || 'Notice';
     showBootstrapToast(content, label, className);
-  } else {
+  } else if (el.classList.contains('show-badge')) {
     showBadge(el, content);
   }
 }

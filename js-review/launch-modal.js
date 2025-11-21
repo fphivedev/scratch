@@ -114,7 +114,7 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
-export function initModalLoader() {
+export function initModalLoader(baseUrl) {
   try {
     if (document.body && document.body.dataset.notificationInitBound === '1') return;
     document.addEventListener('click', (event) => {
@@ -127,7 +127,8 @@ export function initModalLoader() {
         return;
       }
 
-      launchModal(id);
+      // Pass baseUrl if provided, otherwise launchModal will use default
+      launchModal(id, baseUrl ? { baseUrl } : {});
     });
     if (document.body) document.body.dataset.notificationInitBound = '1';
   } catch (e) {

@@ -12,12 +12,6 @@ import { initSearchFormField } from './utils.js';
 // initialise components after the dom has loaded
 document.addEventListener('DOMContentLoaded', () => {
 
-  // load any html on .action-load-url-into-element + data-url=urlEndPoint
-  initAutoLoadHtml();
-
-  // Initialise notification modal launcher (delegated handler)
-  initModalLoader();
-
   // Initialise the search form (if this is the search form)
   // Otherwise initialise the rest of the site elements
   const hasSearchForm = !!document.getElementById('search-form');
@@ -27,6 +21,10 @@ document.addEventListener('DOMContentLoaded', () => {
   } else {
     initDatepickers(document);
   }
+
+
+  // Initialise notification modal launcher (delegated handler)
+  initModalLoader('/api/notifications/');
 
   // also initialise tab handling
   initTabs();
@@ -41,6 +39,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const sas = initSearchAndSave();
   window.sas = sas;
 
+  // load any html on .action-load-url-into-element + data-url=urlEndPoint
+  initAutoLoadHtml();
+  
   // Initialise delegated fetch/async handlers
   fetchInit();
 });
