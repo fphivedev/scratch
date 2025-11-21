@@ -7,7 +7,7 @@ import { initDatepickers } from './date-init.js';
 import { initQuillNotes } from './quill-init.js';
 import { initTabs } from './tabs.js';
 import { initSearchAndSave } from './search-and-save.js';
-import { initSearchFormField } from './utils.js';
+import { initSearchFormField, initGoLinks } from './utils.js';
 
 // initialise components after the dom has loaded
 document.addEventListener('DOMContentLoaded', () => {
@@ -32,6 +32,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // submit the header search form (moved to utils.js)
   initSearchFormField();
 
+  // Initialise .go click navigation links
+  initGoLinks();
+
   // initialise the wysiwig notes editor via quill-init.js
   initQuillNotes();
 
@@ -41,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // load any html on .action-load-url-into-element + data-url=urlEndPoint
   initAutoLoadHtml();
-  
+
   // Initialise delegated fetch/async handlers
   fetchInit();
 });
