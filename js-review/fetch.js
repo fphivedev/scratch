@@ -51,3 +51,24 @@ export async function handleAsync(el) {
     showBadge(el, content);
   }
 }
+
+// Initialise delegated async handlers (idempotent)
+export function fetchInit() {
+  try {
+    if (document.body && document.body.dataset.fetchInitBound === '1') return;
+    document.addEventListener('click', (evt) => {
+      const el = evt.target && evt.target.closest && evt.target.closest('.action-async-result');
+      if (!el) return;
+
+      if (el.dataset._busy === '1') return;
+      el.dataset._busy = '1';
+      // call handleAsync and ensure we clear busy flag when finished
+      // handleAsync is in this module's scope
+      handleAsync(el).finally(() => { el.dataset._busy = '0'; });
+    });
+    if (document.body) document.body.dataset.fetchInitBound = '1';
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.warn('fetchInit failed', e);
+  }
+}

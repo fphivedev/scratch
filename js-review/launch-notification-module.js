@@ -366,3 +366,51 @@ export class SearchPage {
     return true;
   }
 }
+
+// Lightweight notification modal launcher + initializer
+// - export launchNotificationModal(id): attempts to delegate to a global implementation
+//   if present, otherwise emits a DOM event 'launch-notification' with the id.
+// - export initNotificationModal(): idempotently binds a delegated click handler
+//   for elements with class `.action-launch-notifications-modal` and forwards
+//   the id to `launchNotificationModal(id)`.
+export function launchNotificationModal(id) {
+  if (!id) return;
+  // If a site-specific implementation exists on window, prefer it
+  try {
+    if (typeof window !== 'undefined' && typeof window.launchNotificationModal === 'function') {
+      return window.launchNotificationModal(id);
+    }
+  } catch (_) {}
+
+  // Fallback: emit an event so other code can handle launching the modal
+  try {
+    const ev = new CustomEvent('launch-notification', { detail: { id: id } });
+    (document || window).dispatchEvent(ev);
+  } catch (e) {
+    // Last resort: log so it's discoverable in console
+    // eslint-disable-next-line no-console
+    console.warn('No launchNotificationModal implementation available for id:', id);
+  }
+}
+
+export function initNotificationModal() {
+  try {
+    if (document.body && document.body.dataset.notificationInitBound === '1') return;
+    document.addEventListener('click', (event) => {
+      const trigger = event.target.closest && event.target.closest('.action-launch-notifications-modal');
+      if (!trigger) return;
+
+      const id = trigger.dataset.id;
+      if (!id) {
+        alert('Missing data-id attribute.');
+        return;
+      }
+
+      launchNotificationModal(id);
+    });
+    if (document.body) document.body.dataset.notificationInitBound = '1';
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.warn('initNotificationModal failed', e);
+  }
+}
