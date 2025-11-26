@@ -24,7 +24,27 @@ export async function handleAsync(el) {
   const url = el?.dataset?.url;
   if (!url) return;
 
-  const result = await fetchJsonOrText(url, { method: 'GET' });
+  // Build URL with additional field values if data-fields is present
+  let finalUrl = url;
+  const fieldsAttr = el.dataset.fields;
+  if (fieldsAttr) {
+    const fieldIds = fieldsAttr.split('|').map(id => id.trim()).filter(Boolean);
+    const urlObj = new URL(finalUrl, window.location.origin);
+    
+    fieldIds.forEach(fieldId => {
+      const fieldEl = document.getElementById(fieldId);
+      if (fieldEl) {
+        const value = fieldEl.value || fieldEl.textContent || '';
+        if (value) {
+          urlObj.searchParams.set(fieldId, value);
+        }
+      }
+    });
+    
+    finalUrl = urlObj.pathname + urlObj.search;
+  }
+
+  const result = await fetchJsonOrText(finalUrl, { method: 'GET' });
   if (!result.ok) {
     if (el.classList.contains('show-toast')) {
       showBootstrapToast('Request failed', 'Error', 'bg-danger-subtle border border-danger-subtle');
