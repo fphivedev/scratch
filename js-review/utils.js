@@ -16,6 +16,37 @@ export function initSearchFormField() {
   });
 }
 
+
+// requiredActionsSearchFormField: wire Enter key on remittal search input to navigate
+export function initRequiredActionsSearchFormField() {
+
+  // search onEnter of the search input
+  const el = document.getElementById('requiredActionsSearchFormField');
+  if (!el) return;
+  
+  // Use keydown to reliably catch Enter across browsers
+  el.addEventListener('keydown', function (event) {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      const searchVal = el.value || '';
+      const decision_typeID = [...document.querySelectorAll('input[name="decision_typeID"]:checked')].map(cb =>cb.value) || '';
+      window.location.href = '?page=required_actions&submit=search&search=' + encodeURIComponent(searchVal) + '&tribunal=' + decision_typeID;
+    }
+  });
+  
+  
+  // search onClick of the search button
+  const btn = document.getElementById('requiredActionsSearchFormButton');
+  if (!btn) return;  
+  
+  btn.addEventListener('click', function (event) {
+      const searchVal = el.value || '';
+      const decision_typeID = [...document.querySelectorAll('input[name="decision_typeID"]:checked')].map(cb =>cb.value) || '';
+      window.location.href = '?page=required_actions&submit=search&search=' + encodeURIComponent(searchVal) + '&tribunal=' + decision_typeID;
+      
+  });
+  
+}
 // initGoLinks: delegated click handler for .go elements with data-url
 // - .go + data-url → navigate to URL in same tab
 // - .go.go-new + data-url → open URL in new tab
