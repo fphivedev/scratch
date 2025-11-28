@@ -1,51 +1,53 @@
 // Small page utilities
-// initSearchFormField: wire Enter key on header search input to navigate
+// initSearchFormField: wire Enter key and button click on search input to navigate
+// - Looks for #searchFormField (input) and #searchFormButton (button with data-url)
+// - Optionally collects checked checkboxes with name="decision_typeID"
+// - Navigates to data-url with search and tribunal params
 export function initSearchFormField() {
-  const el = document.getElementById('searchFormField');
-  if (!el) return;
-
-  // Use keydown to reliably catch Enter across browsers
-  el.addEventListener('keydown', function (event) {
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      const searchVal = (document.getElementById('searchFormField') || {}).value || '';
-      if (searchVal.trim() !== '') {
-        window.location.href = '?submit=search&case_number=' + encodeURIComponent(searchVal);
-      }
-    }
-  });
-}
-
-
-// requiredActionsSearchFormField: wire Enter key on remittal search input to navigate
-export function initRequiredActionsSearchFormField() {
-
-  // search onEnter of the search input
-  const el = document.getElementById('requiredActionsSearchFormField');
-  if (!el) return;
+  const searchInput = document.getElementById('searchFormField');
+  const searchButton = document.getElementById('searchFormButton');
   
-  // Use keydown to reliably catch Enter across browsers
-  el.addEventListener('keydown', function (event) {
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      const searchVal = el.value || '';
-      const decision_typeID = [...document.querySelectorAll('input[name="decision_typeID"]:checked')].map(cb =>cb.value) || '';
-      window.location.href = '?page=required_actions&submit=search&search=' + encodeURIComponent(searchVal) + '&tribunal=' + decision_typeID;
-    }
-  });
-  
-  
-  // search onClick of the search button
-  const btn = document.getElementById('requiredActionsSearchFormButton');
-  if (!btn) return;  
-  
-  btn.addEventListener('click', function (event) {
-      const searchVal = el.value || '';
-      const decision_typeID = [...document.querySelectorAll('input[name="decision_typeID"]:checked')].map(cb =>cb.value) || '';
-      window.location.href = '?page=required_actions&submit=search&search=' + encodeURIComponent(searchVal) + '&tribunal=' + decision_typeID;
+  if (!searchInput && !searchButton) return;
+
+  // Build URL with search parameters
+  function performSearch() {
+    const baseUrl = searchButton?.dataset?.url || '?submit=search';
+    const searchVal = searchInput?.value || '';
+    const checkedBoxes = document.querySelectorAll('input[name="decision_typeID"]:checked');
+    const decision_typeID = Array.from(checkedBoxes).map(cb => cb.value);
       
-  });
-  
+    const urlParams = new URLSearchParams(baseUrl.includes('?') ? baseUrl.split('?')[1] : '');
+    
+    if (searchVal.trim()) {
+      urlParams.set('search', searchVal);
+    }
+    
+    if (decision_typeID.length > 0) {
+      urlParams.set('tribunal', decision_typeID.join(','));
+    }
+    
+    // Preserve base path from data-url
+    const basePath = baseUrl.split('?')[0];
+    window.location.href = basePath + '?' + urlParams.toString();
+  }
+
+  // Wire Enter key on search input
+  if (searchInput) {
+    searchInput.addEventListener('keydown', function (event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        performSearch();
+      }
+    });
+  }
+
+  // Wire click on search button
+  if (searchButton) {
+    searchButton.addEventListener('click', function (event) {
+      event.preventDefault();
+      performSearch();
+    });
+  }
 }
 // initGoLinks: delegated click handler for .go elements with data-url
 // - .go + data-url → navigate to URL in same tab
