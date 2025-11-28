@@ -35,17 +35,21 @@ Function DbQuery(sqlText, params)
   Dim rs, recordsAffected
   Set rs = Nothing
   recordsAffected = 0
-  On Error Resume Next
-  ' Capture optional recordsAffected; some providers return no recordset for non-SELECT statements
+  
+  ' Execute and let errors bubble up
   Set rs = cmd.Execute(recordsAffected)
-  If Err.Number <> 0 Then
-    ' Clear any provider-specific error and continue — we'll handle missing recordset below
-    Err.Clear
-  End If
 
   ' If a recordset object was returned and is open, read rows. Otherwise return an empty array.
   If (IsObject(rs) And Not rs Is Nothing) Then
     If rs.State = adStateOpen Then
+      ' Check if recordset is empty (BOF and EOF both true)
+      If rs.BOF And rs.EOF Then
+        rs.Close: Set rs = Nothing
+        cn.Close: Set cn = Nothing
+        DbQuery = Array()
+        Exit Function
+      End If
+      
       ' Collect field names from the recordset (some providers don't expose cmd.Fields)
       Dim fieldCount, fi, fieldNames
       fieldCount = rs.Fields.Count
@@ -97,12 +101,9 @@ Function DbExecute(sqlText, params)
 
   recordsAffected = 0
   Set rs = Nothing
-  On Error Resume Next
+  
+  ' Execute and let errors bubble up
   Set rs = cmd.Execute(recordsAffected)
-  If Err.Number <> 0 Then
-    ' swallow provider-specific warnings/errors; we'll return recordsAffected (0) on failure
-    Err.Clear
-  End If
 
   ' If an unexpected recordset was returned, close it
   If IsObject(rs) And Not rs Is Nothing Then
