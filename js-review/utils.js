@@ -15,7 +15,7 @@ export function initSearchFormField() {
     const searchVal = searchInput?.value || '';
     const checkedBoxes = document.querySelectorAll('input[name="decision_typeID"]:checked');
     const decision_typeID = Array.from(checkedBoxes).map(cb => cb.value);
-      
+
     const urlParams = new URLSearchParams(baseUrl.includes('?') ? baseUrl.split('?')[1] : '');
     
     if (searchVal.trim()) {
@@ -175,5 +175,68 @@ export function updateTableSortArrows() {
     }
   } catch (e) {
     console.warn('updateTableSortArrows failed', e);
+  }
+}
+
+// initPasteAndSearch: wire paste event on textarea to trigger async fetch
+// - Looks for #pasteAndSearchMultiple textarea with data-url attribute
+// - On paste, splits textarea value by newlines, strips non-alphanumeric chars
+// - Triggers handleAsync with concatenated values as search param
+// - Requires fetch.js to be loaded and handleAsync to be available
+export function initPasteAndSearch() {
+  try {
+    if (document.body && document.body.dataset.pasteAndSearchInitBound === '1') return;
+    
+    const textarea = document.getElementById('pasteAndSearchMultiple');
+    if (!textarea) return;
+
+    textarea.addEventListener('paste', async (event) => {
+      // Let the paste complete first
+      setTimeout(async () => {
+        const rawValue = textarea.value || '';
+        if (!rawValue.trim()) return;
+
+        // Split by newlines and clean each value
+        const lines = rawValue.split(/\r?\n/).map(line => {
+          // Strip non-alphanumeric characters (keep only letters, numbers)
+          return line.replace(/[^a-zA-Z0-9]/g, '');
+        }).filter(Boolean); // Remove empty lines
+
+        if (lines.length === 0) return;
+
+        // Build search param as comma-separated values
+        const searchParam = lines.join(',');
+        const baseUrl = textarea.dataset.url || '';
+        
+        if (!baseUrl) {
+          console.warn('pasteAndSearchMultiple: missing data-url attribute');
+          return;
+        }
+
+        // Build final URL with search param
+        const urlObj = new URL(baseUrl, window.location.origin);
+        urlObj.searchParams.set('search', searchParam);
+        const finalUrl = urlObj.pathname + urlObj.search;
+
+        // Update the data-url temporarily so handleAsync can use it
+        const originalUrl = textarea.dataset.url;
+        textarea.dataset.url = finalUrl;
+
+        // Import and call handleAsync from fetch.js
+        try {
+          const { handleAsync } = await import('./fetch.js');
+          await handleAsync(textarea);
+        } catch (err) {
+          console.error('pasteAndSearch: failed to load fetch.js or execute handleAsync', err);
+        } finally {
+          // Restore original URL
+          textarea.dataset.url = originalUrl;
+        }
+      }, 10);
+    });
+
+    if (document.body) document.body.dataset.pasteAndSearchInitBound = '1';
+  } catch (e) {
+    console.warn('initPasteAndSearch failed', e);
   }
 }
