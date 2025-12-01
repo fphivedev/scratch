@@ -34,9 +34,28 @@ export async function handleAsync(el) {
     fieldIds.forEach(fieldId => {
       const fieldEl = document.getElementById(fieldId);
       if (fieldEl) {
-        const value = fieldEl.value || fieldEl.textContent || '';
+        let value = '';
+        
+        // Handle checkboxes - only include if checked
+        if (fieldEl.type === 'checkbox') {
+          if (fieldEl.checked) {
+            value = fieldEl.value || 'on';
+          }
+        } else {
+          // For other inputs, textareas, etc.
+          value = fieldEl.value || fieldEl.textContent || '';
+        }
+        
         if (value) {
-          urlObj.searchParams.set(fieldId, value);
+          const paramName = fieldEl.name || fieldId;
+          // Check if parameter already exists
+          if (urlObj.searchParams.has(paramName)) {
+            // Append to existing value with comma separator
+            const existing = urlObj.searchParams.get(paramName);
+            urlObj.searchParams.set(paramName, existing + ',' + value);
+          } else {
+            urlObj.searchParams.set(paramName, value);
+          }
         }
       }
     });
