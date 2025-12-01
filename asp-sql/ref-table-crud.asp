@@ -24,28 +24,54 @@ Dim idColumn : idColumn = tableName & "ID"
 Dim tableFull : tableFull = "ref_" & tableName
 
 ' Get action
-Dim action : action = Trim(Request("action") & "")
-Dim itemId : itemId = Trim(Request("id") & "")
-Dim description : description = Trim(Request("description") & "")
-Dim isActive : isActive = Trim(Request("isActive") & "")
+Dim bulkUpdate : bulkUpdate = Trim(Request("bulk_update") & "")
 
 ' Handle POST actions
 If Request.ServerVariables("REQUEST_METHOD") = "POST" Then
-  Select Case action
-    Case "create"
+  ' Handle bulk update
+  If bulkUpdate = "1" Then
+    Dim updateCount : updateCount = CInt(Request("update_count"))
+    Dim idx, upItemId, upDesc, upActive
+    
+    ' Process new item first if description provided
+    Dim newDesc : newDesc = Trim(Request("new_description") & "")
+    Dim newActive : newActive = Trim(Request("new_isActive") & "")
+    If newDesc <> "" Then
+      description = newDesc
+      isActive = newActive
       Call CreateItem()
-    Case "update"
+    End If
+    
+    ' Process all updates
+    For idx = 0 To updateCount - 1
+      upItemId = Request("update_" & idx & "_id")
+      upDesc = Trim(Request("update_" & idx & "_description") & "")
+      upActive = Trim(Request("update_" & idx & "_isActive") & "")
+      
+      ' Update this item
+      itemId = upItemId
+      description = upDesc
+      isActive = upActive
       Call UpdateItem()
-    Case "delete"
-      Call DeleteItem()
-  End Select
-  ' Redirect to clear POST data
-  Response.Redirect "?table=" & Server.URLEncode(tableName)
-  Response.End
+    Next
+    
+    Response.Redirect "?table=" & Server.URLEncode(tableName)
+    Response.End
+  End If
+  
+  ' Handle individual delete action
+  action = Trim(Request("action") & "")
+  If action = "delete" Then
+    itemId = Trim(Request("id") & "")
+    Call DeleteItem()
+    Response.Redirect "?table=" & Server.URLEncode(tableName)
+    Response.End
+  End If
 End If
 
 ' Load all items
 Dim items : items = LoadItems()
+Dim action, itemId, description, isActive
 
 Function IsValidTableName(name)
   ' Only allow alphanumeric and underscore
@@ -99,151 +125,160 @@ End Sub
 <div class="container mt-4">
   <h1>Manage <%= Server.HTMLEncode(tableName) %></h1>
   
-  <!-- Create Form -->
-  <div class="card mb-4">
-    <div class="card-header">Add New <%= Server.HTMLEncode(tableName) %></div>
-    <div class="card-body">
-      <form method="post" action="?table=<%= Server.URLEncode(tableName) %>">
-        <input type="hidden" name="action" value="create">
-        <div class="row g-3">
-          <div class="col-md-8">
-            <label for="description" class="form-label">Description</label>
-            <input type="text" class="form-control" id="description" name="description" required maxlength="500">
-          </div>
-          <div class="col-md-2">
-            <label for="isActive" class="form-label">Active</label>
-            <select class="form-select" id="isActive" name="isActive">
-              <option value="1" selected>Yes</option>
-              <option value="0">No</option>
-            </select>
-          </div>
-          <div class="col-md-2 d-flex align-items-end">
-            <button type="submit" class="btn btn-primary w-100">Add</button>
-          </div>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Items Table -->
+  <!-- Editable Table -->
   <div class="card">
-    <div class="card-header">Existing <%= Server.HTMLEncode(tableName) %> Items</div>
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <span>Edit <%= Server.HTMLEncode(tableName) %> Items</span>
+      <button type="button" class="btn btn-success" id="saveAllBtn">Save All Changes</button>
+    </div>
     <div class="card-body">
-      <% If IsArray(items) And UBound(items) >= 0 Then %>
+      <form method="post" action="?table=<%= Server.URLEncode(tableName) %>" id="bulkEditForm">
         <table class="table table-striped">
           <thead>
             <tr>
-              <th>ID</th>
+              <th style="width: 80px;">ID</th>
               <th>Description</th>
-              <th>Active</th>
-              <th>Actions</th>
+              <th style="width: 120px;">Active</th>
+              <th style="width: 100px;">Action</th>
             </tr>
           </thead>
           <tbody>
-            <% 
-            Dim i, row
-            For i = 0 To UBound(items)
-              Set row = items(i)
-            %>
-            <tr id="row-<%= row(idColumn) %>">
-              <td><%= Server.HTMLEncode(CStr(row(idColumn))) %></td>
+            <!-- New Record Row (always first) -->
+            <tr class="table-success">
+              <td><em>New</em></td>
               <td>
-                <span class="view-mode"><%= Server.HTMLEncode(row("description")) %></span>
-                <input type="text" class="form-control form-control-sm edit-mode d-none" 
-                       value="<%= Server.HTMLEncode(row("description")) %>" 
-                       data-field="description" maxlength="500">
+                <input type="text" class="form-control form-control-sm" 
+                       name="new_description" 
+                       placeholder="Enter description to add new item" 
+                       maxlength="500">
               </td>
               <td>
-                <span class="view-mode">
-                  <% If CBool(row("isActive")) Then %>
-                    <span class="badge bg-success">Yes</span>
-                  <% Else %>
-                    <span class="badge bg-secondary">No</span>
-                  <% End If %>
-                </span>
-                <select class="form-select form-select-sm edit-mode d-none" data-field="isActive">
-                  <option value="1" <% If CBool(row("isActive")) Then Response.Write "selected" %>>Yes</option>
-                  <option value="0" <% If Not CBool(row("isActive")) Then Response.Write "selected" %>>No</option>
+                <select class="form-select form-select-sm" name="new_isActive">
+                  <option value="1" selected>Yes</option>
+                  <option value="0">No</option>
                 </select>
               </td>
-              <td>
-                <div class="btn-group btn-group-sm view-mode" role="group">
-                  <button type="button" class="btn btn-outline-primary btn-edit" 
-                          data-id="<%= row(idColumn) %>">Edit</button>
-                  <form method="post" action="?table=<%= Server.URLEncode(tableName) %>" 
-                        style="display:inline" 
-                        onsubmit="return confirm('Delete this item?');">
-                    <input type="hidden" name="action" value="delete">
-                    <input type="hidden" name="id" value="<%= row(idColumn) %>">
-                    <button type="submit" class="btn btn-outline-danger">Delete</button>
-                  </form>
-                </div>
-                <div class="btn-group btn-group-sm edit-mode d-none" role="group">
-                  <button type="button" class="btn btn-success btn-save" 
-                          data-id="<%= row(idColumn) %>">Save</button>
-                  <button type="button" class="btn btn-secondary btn-cancel">Cancel</button>
-                </div>
-              </td>
+              <td><em>--</em></td>
             </tr>
-            <% 
-              Set row = Nothing
-            Next 
-            %>
+
+            <!-- Existing Items -->
+            <% If IsArray(items) And UBound(items) >= 0 Then %>
+              <% 
+              Dim i, row
+              For i = 0 To UBound(items)
+                Set row = items(i)
+              %>
+              <tr data-id="<%= row(idColumn) %>">
+                <td><%= Server.HTMLEncode(CStr(row(idColumn))) %></td>
+                <td>
+                  <input type="text" class="form-control form-control-sm" 
+                         name="desc_<%= row(idColumn) %>" 
+                         value="<%= Server.HTMLEncode(row("description")) %>" 
+                         maxlength="500">
+                </td>
+                <td>
+                  <select class="form-select form-select-sm" name="active_<%= row(idColumn) %>">
+                    <option value="1" <% If CBool(row("isActive")) Then Response.Write "selected" %>>Yes</option>
+                    <option value="0" <% If Not CBool(row("isActive")) Then Response.Write "selected" %>>No</option>
+                  </select>
+                </td>
+                <td>
+                  <button type="button" class="btn btn-sm btn-outline-danger btn-delete" 
+                          data-id="<%= row(idColumn) %>"
+                          title="Delete">
+                    ×
+                  </button>
+                </td>
+              </tr>
+              <% 
+                Set row = Nothing
+              Next 
+              %>
+            <% Else %>
+              <tr>
+                <td colspan="4" class="text-muted text-center">No items found. Add one above.</td>
+              </tr>
+            <% End If %>
           </tbody>
         </table>
-      <% Else %>
-        <p class="text-muted">No items found.</p>
-      <% End If %>
+      </form>
     </div>
   </div>
 </div>
 
 <script>
-// Simple inline edit functionality
 document.addEventListener('DOMContentLoaded', () => {
-  const table = document.querySelector('table');
-  if (!table) return;
-
-  // Edit button click
-  table.addEventListener('click', (e) => {
-    const editBtn = e.target.closest('.btn-edit');
-    if (editBtn) {
-      const row = editBtn.closest('tr');
-      row.querySelectorAll('.view-mode').forEach(el => el.classList.add('d-none'));
-      row.querySelectorAll('.edit-mode').forEach(el => el.classList.remove('d-none'));
-      return;
-    }
-
-    // Cancel button click
-    const cancelBtn = e.target.closest('.btn-cancel');
-    if (cancelBtn) {
-      const row = cancelBtn.closest('tr');
-      row.querySelectorAll('.edit-mode').forEach(el => el.classList.add('d-none'));
-      row.querySelectorAll('.view-mode').forEach(el => el.classList.remove('d-none'));
-      return;
-    }
-
-    // Save button click
-    const saveBtn = e.target.closest('.btn-save');
-    if (saveBtn) {
-      const row = saveBtn.closest('tr');
-      const id = saveBtn.dataset.id;
-      const description = row.querySelector('[data-field="description"]').value;
-      const isActive = row.querySelector('[data-field="isActive"]').value;
-
-      // Create and submit form
-      const form = document.createElement('form');
-      form.method = 'post';
-      form.action = '?table=<%= Server.URLEncode(tableName) %>';
-      form.innerHTML = `
-        <input type="hidden" name="action" value="update">
-        <input type="hidden" name="id" value="${id}">
-        <input type="hidden" name="description" value="${description}">
-        <input type="hidden" name="isActive" value="${isActive}">
+  const form = document.getElementById('bulkEditForm');
+  const saveBtn = document.getElementById('saveAllBtn');
+  
+  // Save all changes
+  saveBtn.addEventListener('click', () => {
+    const updates = [];
+    const newDesc = document.querySelector('[name="new_description"]').value.trim();
+    const newActive = document.querySelector('[name="new_isActive"]').value;
+    
+    // Collect all existing row updates
+    const rows = form.querySelectorAll('tbody tr[data-id]');
+    rows.forEach(row => {
+      const id = row.dataset.id;
+      const description = row.querySelector('[name="desc_' + id + '"]').value;
+      const isActive = row.querySelector('[name="active_' + id + '"]').value;
+      
+      updates.push({
+        action: 'update',
+        id: id,
+        description: description,
+        isActive: isActive
+      });
+    });
+    
+    // Build combined form and submit
+    const submitForm = document.createElement('form');
+    submitForm.method = 'post';
+    submitForm.action = '?table=<%= Server.URLEncode(tableName) %>';
+    
+    // Add new item if description provided
+    if (newDesc) {
+      submitForm.innerHTML += `
+        <input type="hidden" name="action" value="create">
+        <input type="hidden" name="description" value="${newDesc}">
+        <input type="hidden" name="isActive" value="${newActive}">
       `;
-      document.body.appendChild(form);
-      form.submit();
     }
+    
+    // Add all updates
+    updates.forEach((upd, idx) => {
+      submitForm.innerHTML += `
+        <input type="hidden" name="update_${idx}_id" value="${upd.id}">
+        <input type="hidden" name="update_${idx}_description" value="${upd.description}">
+        <input type="hidden" name="update_${idx}_isActive" value="${upd.isActive}">
+      `;
+    });
+    
+    submitForm.innerHTML += `<input type="hidden" name="bulk_update" value="1">`;
+    submitForm.innerHTML += `<input type="hidden" name="update_count" value="${updates.length}">`;
+    
+    document.body.appendChild(submitForm);
+    submitForm.submit();
+  });
+  
+  // Delete button handler
+  form.addEventListener('click', (e) => {
+    const deleteBtn = e.target.closest('.btn-delete');
+    if (!deleteBtn) return;
+    
+    if (!confirm('Delete this item?')) return;
+    
+    const id = deleteBtn.dataset.id;
+    const deleteForm = document.createElement('form');
+    deleteForm.method = 'post';
+    deleteForm.action = '?table=<%= Server.URLEncode(tableName) %>';
+    deleteForm.innerHTML = `
+      <input type="hidden" name="action" value="delete">
+      <input type="hidden" name="id" value="${id}">
+    `;
+    document.body.appendChild(deleteForm);
+    deleteForm.submit();
   });
 });
 </script>
