@@ -8,6 +8,7 @@ import { initQuillNotes } from './quill-init.js';
 import { initTabs } from './tabs.js';
 import { initSearchAndSave } from './search-and-save.js';
 import { initSearchFormField, initGoLinks, initTableSort, updateTableSortArrows, initPasteAndSearch } from './utils.js';
+import { initNotesPopovers } from './bootstrap-inits.js';
 
 // initialise components after the dom has loaded
 document.addEventListener('DOMContentLoaded', () => {
@@ -54,4 +55,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Initialise delegated fetch/async handlers
   fetchInit();
+
+  // Initialise Bootstrap popovers for notes
+  initNotesPopovers();
+
 });
