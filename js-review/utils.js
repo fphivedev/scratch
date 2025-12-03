@@ -52,6 +52,7 @@ export function initSearchFormField() {
 // initGoLinks: delegated click handler for .go elements with data-url
 // - .go + data-url → navigate to URL in same tab
 // - .go.go-new + data-url → open URL in new tab
+// - .go + Ctrl/Cmd + click → open URL in new tab
 export function initGoLinks() {
   try {
     if (document.body && document.body.dataset.goLinksInitBound === '1') return;
@@ -66,7 +67,8 @@ export function initGoLinks() {
       // Prevent default if it's an anchor or button
       event.preventDefault();
 
-      if (trigger.classList.contains('go-new')) {
+      // Check for Ctrl/Cmd + click or go-new class
+      if (trigger.classList.contains('go-new') || event.ctrlKey || event.metaKey) {
         // Open in new tab
         window.open(url, '_blank', 'noopener,noreferrer');
       } else {
