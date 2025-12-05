@@ -242,3 +242,83 @@ export function initPasteAndSearch() {
     console.warn('initPasteAndSearch failed', e);
   }
 }
+
+// initCopyTableToClipboard: delegated click handler for copying tables to clipboard
+// - Add class 'copy-table' to elements (buttons, links) with data-table attribute
+// - data-table should be a selector for the table to copy (e.g., "#myTable", ".result-table")
+// - Converts table to tab-separated values (TSV) for Excel compatibility
+// - Optionally add data-include-headers="false" to exclude header row
+export function initCopyTableToClipboard() {
+  try {
+    if (document.body && document.body.dataset.copyTableInitBound === '1') return;
+    
+    document.addEventListener('click', async (event) => {
+      const trigger = event.target.closest && event.target.closest('.copy-table');
+      if (!trigger) return;
+
+      event.preventDefault();
+
+      const tableSelector = trigger.dataset.table;
+      if (!tableSelector) {
+        console.warn('copy-table: missing data-table attribute');
+        return;
+      }
+
+      const table = document.querySelector(tableSelector);
+      if (!table) {
+        console.warn(`copy-table: table not found for selector "${tableSelector}"`);
+        return;
+      }
+
+      const includeHeaders = trigger.dataset.includeHeaders !== 'false';
+
+      try {
+        // Convert table to TSV format
+        let tsvContent = '';
+        const rows = table.querySelectorAll('tr');
+
+        rows.forEach((row, rowIndex) => {
+          // Skip header row if includeHeaders is false
+          if (rowIndex === 0 && !includeHeaders && row.closest('thead')) {
+            return;
+          }
+
+          const cells = row.querySelectorAll('th, td');
+          const rowData = Array.from(cells).map(cell => {
+            // Get text content and clean it
+            let text = cell.textContent || '';
+            text = text.trim();
+            // Escape tabs and newlines for TSV
+            text = text.replace(/\t/g, ' ').replace(/\n/g, ' ');
+            return text;
+          });
+
+          if (rowData.length > 0) {
+            tsvContent += rowData.join('\t') + '\n';
+          }
+        });
+
+        // Copy to clipboard
+        await navigator.clipboard.writeText(tsvContent);
+
+        // Visual feedback
+        const originalText = trigger.textContent;
+        trigger.textContent = '✓ Copied!';
+        trigger.classList.add('btn-success');
+        
+        setTimeout(() => {
+          trigger.textContent = originalText;
+          trigger.classList.remove('btn-success');
+        }, 2000);
+
+      } catch (err) {
+        console.error('copy-table: failed to copy table', err);
+        alert('Failed to copy table to clipboard. Please try again.');
+      }
+    });
+    
+    if (document.body) document.body.dataset.copyTableInitBound = '1';
+  } catch (e) {
+    console.warn('initCopyTableToClipboard failed', e);
+  }
+}
