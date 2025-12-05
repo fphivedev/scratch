@@ -322,3 +322,100 @@ export function initCopyTableToClipboard() {
     console.warn('initCopyTableToClipboard failed', e);
   }
 }
+
+// initCopyFetchToClipboard: delegated click handler for fetching HTML and copying to clipboard
+// - Add class 'copy-fetch' to elements (buttons, links) with data-url attribute
+// - Fetches HTML content from data-url and copies to clipboard
+// - Shows loading state and disables button during fetch
+// - Optional data-selector to copy only a specific element from the fetched HTML
+export function initCopyFetchToClipboard() {
+  try {
+    if (document.body && document.body.dataset.copyFetchInitBound === '1') return;
+    
+    document.addEventListener('click', async (event) => {
+      const trigger = event.target.closest && event.target.closest('.copy-fetch');
+      if (!trigger) return;
+
+      event.preventDefault();
+
+      // Prevent double-click while loading
+      if (trigger.disabled || trigger.dataset.loading === 'true') {
+        return;
+      }
+
+      const url = trigger.dataset.url;
+      if (!url) {
+        console.warn('copy-fetch: missing data-url attribute');
+        return;
+      }
+
+      const selector = trigger.dataset.selector; // optional selector to extract specific element
+      const originalHTML = trigger.innerHTML;
+      const originalText = trigger.textContent;
+
+      try {
+        // Set loading state
+        trigger.disabled = true;
+        trigger.dataset.loading = 'true';
+        trigger.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Loading...';
+
+        // Fetch the content
+        const response = await fetch(url, {
+          credentials: 'same-origin'
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const html = await response.text();
+
+        // Extract specific element if selector provided
+        let contentToCopy = html;
+        if (selector) {
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(html, 'text/html');
+          const targetElement = doc.querySelector(selector);
+          
+          if (targetElement) {
+            contentToCopy = targetElement.outerHTML;
+          } else {
+            console.warn(`copy-fetch: selector "${selector}" not found in fetched HTML`);
+          }
+        }
+
+        // Copy to clipboard
+        await navigator.clipboard.writeText(contentToCopy);
+
+        // Success feedback
+        trigger.innerHTML = '✓ Copied!';
+        trigger.classList.add('btn-success');
+        
+        setTimeout(() => {
+          trigger.innerHTML = originalHTML;
+          trigger.classList.remove('btn-success');
+          trigger.disabled = false;
+          trigger.dataset.loading = 'false';
+        }, 2000);
+
+      } catch (err) {
+        console.error('copy-fetch: failed to fetch or copy content', err);
+        
+        // Error feedback
+        trigger.innerHTML = '✗ Failed';
+        trigger.classList.add('btn-danger');
+        
+        setTimeout(() => {
+          trigger.innerHTML = originalHTML;
+          trigger.classList.remove('btn-danger');
+          trigger.disabled = false;
+          trigger.dataset.loading = 'false';
+        }, 2000);
+      }
+    });
+    
+    if (document.body) document.body.dataset.copyFetchInitBound = '1';
+  } catch (e) {
+    console.warn('initCopyFetchToClipboard failed', e);
+  }
+}
