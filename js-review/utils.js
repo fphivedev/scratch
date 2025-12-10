@@ -419,3 +419,65 @@ export function initCopyFetchToClipboard() {
     console.warn('initCopyFetchToClipboard failed', e);
   }
 }
+
+// initTableRowGroupHover: add hover effect for grouped table rows
+// - Add data-row-group="groupId" to all rows that belong together
+// - When hovering over any row in a group, all rows in that group get highlighted
+// - Add class 'table-row-group-hover' for styling (or uses default bg-light)
+export function initTableRowGroupHover() {
+  try {
+    if (document.body && document.body.dataset.rowGroupHoverInitBound === '1') return;
+    
+    let currentGroup = null;
+
+    document.addEventListener('mouseover', (event) => {
+      const row = event.target.closest && event.target.closest('tr[data-row-group]');
+      if (!row) {
+        // Clear previous highlight if mouse leaves grouped rows
+        if (currentGroup) {
+          document.querySelectorAll(`tr[data-row-group="${currentGroup}"]`).forEach(tr => {
+            tr.classList.remove('table-row-group-hover', 'bg-light');
+          });
+          currentGroup = null;
+        }
+        return;
+      }
+
+      const groupId = row.dataset.rowGroup;
+      if (!groupId) return;
+
+      // If we're hovering a different group, clear the previous one
+      if (currentGroup && currentGroup !== groupId) {
+        document.querySelectorAll(`tr[data-row-group="${currentGroup}"]`).forEach(tr => {
+          tr.classList.remove('table-row-group-hover', 'bg-light');
+        });
+      }
+
+      // Highlight all rows in the current group
+      currentGroup = groupId;
+      document.querySelectorAll(`tr[data-row-group="${groupId}"]`).forEach(tr => {
+        tr.classList.add('table-row-group-hover', 'bg-light');
+      });
+    });
+
+    // Clear highlight when mouse leaves the table entirely
+    document.addEventListener('mouseout', (event) => {
+      // Only clear if we're not moving to another tr in the same table
+      const relatedTarget = event.relatedTarget;
+      if (relatedTarget && relatedTarget.closest && relatedTarget.closest('tr[data-row-group]')) {
+        return;
+      }
+
+      if (currentGroup) {
+        document.querySelectorAll(`tr[data-row-group="${currentGroup}"]`).forEach(tr => {
+          tr.classList.remove('table-row-group-hover', 'bg-light');
+        });
+        currentGroup = null;
+      }
+    });
+    
+    if (document.body) document.body.dataset.rowGroupHoverInitBound = '1';
+  } catch (e) {
+    console.warn('initTableRowGroupHover failed', e);
+  }
+}
