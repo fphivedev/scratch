@@ -50,7 +50,7 @@ Function DbQuery(sqlText, params)
         Exit Function
       End If
       
-      ' Collect field names from the recordset (some providers don't expose cmd.Fields)
+      ' Collect field names from the recordset
       Dim fieldCount, fi, fieldNames
       fieldCount = rs.Fields.Count
       ReDim fieldNames(fieldCount - 1)
@@ -58,11 +58,30 @@ Function DbQuery(sqlText, params)
         fieldNames(fi) = rs.Fields(fi).Name
       Next
 
-      Dim data : data = rs.GetRows() ' fast extraction
+      ' Check if any fields are problematic types that GetRows() can't handle well
+      Dim hasLongText : hasLongText = False
+      For fi = 0 To fieldCount - 1
+        Dim fType : fType = rs.Fields(fi).Type
+        ' Check for text/ntext (201, 203) or large varchar/nvarchar that might contain HTML
+        If fType = 201 Or fType = 203 Or rs.Fields(fi).DefinedSize > 8000 Or rs.Fields(fi).DefinedSize = -1 Then
+          hasLongText = True
+          Exit For
+        End If
+      Next
+
+      Dim rows
+      If hasLongText Then
+        ' Manual row reading for problematic data types
+        rows = ReadRowsManually(rs, fieldNames)
+      Else
+        ' Fast extraction with GetRows()
+        Dim data : data = rs.GetRows()
+        rows = ArrayToObjects(data, fieldNames)
+      End If
+      
       rs.Close: Set rs = Nothing
       cn.Close: Set cn = Nothing
-
-      DbQuery = ArrayToObjects(data, fieldNames) ' convert to [{col:val}, ...]
+      DbQuery = rows
       Exit Function
     End If
   End If
@@ -76,6 +95,32 @@ Function DbQuery(sqlText, params)
   End If
   cn.Close: Set cn = Nothing
   DbQuery = Array()
+End Function
+
+' Helper function to read rows manually (for recordsets with text/ntext/large varchar columns)
+Function ReadRowsManually(rs, fieldNames)
+  Dim rowsList, rowObj, fi
+  rowsList = Array()
+  
+  Do While Not rs.EOF
+    Set rowObj = Server.CreateObject("Scripting.Dictionary")
+    For fi = 0 To UBound(fieldNames)
+      rowObj(fieldNames(fi)) = rs.Fields(fi).Value
+    Next
+    
+    ' Resize array and add row
+    ReDim Preserve rowsList(UBound(rowsList) + 1)
+    Set rowsList(UBound(rowsList)) = rowObj
+    
+    rs.MoveNext
+  Loop
+  
+  ' If we got rows, return them; otherwise return empty array
+  If UBound(rowsList) >= 0 And IsObject(rowsList(0)) Then
+    ReadRowsManually = rowsList
+  Else
+    ReadRowsManually = Array()
+  End If
 End Function
 
 ' Execute a non-SELECT statement (INSERT/UPDATE/DELETE) and return the number of records affected
@@ -119,14 +164,29 @@ End Function
 
 Function ArrayToObjects(data, fieldNames)
   Dim rows(), r, c, cols, i
-  If IsEmpty(data) Then
+  
+  ' Check if data is empty or invalid
+  If IsEmpty(data) Or Not IsArray(data) Then
     ArrayToObjects = Array()
     Exit Function
   End If
+  
+  ' GetRows returns a 2D array: (columns, rows)
+  ' Check if we have any rows - UBound(data, 2) will error if second dimension doesn't exist
+  On Error Resume Next
+  Dim rowCount : rowCount = UBound(data, 2)
+  If Err.Number <> 0 Then
+    ' No second dimension means no rows
+    Err.Clear
+    On Error GoTo 0
+    ArrayToObjects = Array()
+    Exit Function
+  End If
+  On Error GoTo 0
 
   cols = UBound(fieldNames) - LBound(fieldNames) + 1
-  ReDim rows(UBound(data,2))
-  For r = 0 To UBound(data,2)
+  ReDim rows(rowCount)
+  For r = 0 To rowCount
     Dim o : Set o = Server.CreateObject("Scripting.Dictionary")
     For c = 0 To UBound(fieldNames)
       o(fieldNames(c)) = data(c, r)
