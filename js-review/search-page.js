@@ -90,10 +90,31 @@ export class SearchPage {
         }
         const itemText = (cbLabel ? cbLabel.textContent : label || el.value || '').trim();
 
-        // Include group heading (e.g., "Location") if present in the nearest column block
-        const groupContainer = el.closest && el.closest('.col, .col-md-3, .col-md-4, .col-md-6, .col-sm-6');
-        const groupLabelEl = groupContainer ? (groupContainer.querySelector('label.form-label') || groupContainer.querySelector(':scope > label.form-label')) : null;
-        const groupText = groupLabelEl ? groupLabelEl.textContent.trim() : '';
+        // Include group heading (e.g., "Location") if present
+        // First check for .form-label sibling of parent .form-check
+        let groupText = '';
+        const formCheck = el.closest && el.closest('.form-check');
+        if (formCheck) {
+          // Look for preceding sibling .form-label
+          let sibling = formCheck.previousElementSibling;
+          while (sibling) {
+            if (sibling.classList && sibling.classList.contains('form-label')) {
+              groupText = sibling.textContent.trim();
+              break;
+            }
+            // Stop if we hit another form-check (means we're in a different group)
+            if (sibling.classList && sibling.classList.contains('form-check')) break;
+            sibling = sibling.previousElementSibling;
+          }
+        }
+        
+        // Fallback to parent container label if no sibling found
+        if (!groupText) {
+          const groupContainer = el.closest && el.closest('.col, .col-md-3, .col-md-4, .col-md-6, .col-sm-6');
+          const groupLabelEl = groupContainer ? (groupContainer.querySelector('label.form-label') || groupContainer.querySelector('.form-label') || groupContainer.querySelector(':scope > label.form-label')) : null;
+          groupText = groupLabelEl ? groupLabelEl.textContent.trim() : '';
+        }
+        
         return groupText ? (groupText + ': ' + itemText) : itemText;
       }
       return null;
