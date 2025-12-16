@@ -9,6 +9,7 @@ import { initTabs } from './tabs.js';
 import { initSearchAndSave } from './search-and-save.js';
 import { initSearchFormField, initGoLinks, initTableSort, updateTableSortArrows, initPasteAndSearch, initCopyTableToClipboard, initCopyFetchToClipboard, initTableRowGroupHover } from './utils.js';
 import { initNotesPopovers } from './bootstrap-inits.js';
+import { initModalForm } from './modal-form.js';
 
 // initialise components after the dom has loaded
 document.addEventListener('DOMContentLoaded', () => {
@@ -67,5 +68,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Initialise Bootstrap popovers for notes
   initNotesPopovers();
+
+  // Initialise modal form handler
+  initModalForm();
 
 });
