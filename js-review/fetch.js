@@ -111,6 +111,24 @@ export async function handleAsync(el) {
         el.classList.add('d-none');
       }
     }
+  } else if (el.classList.contains('remove-element')) {
+    // Remove element specified by data-remove selector
+    const removeSelector = el.dataset.remove;
+    if (removeSelector) {
+      // Find element to remove (could be class or ID)
+      const targetEl = removeSelector.startsWith('#') 
+        ? document.querySelector(removeSelector)
+        : el.closest('.' + removeSelector);
+      
+      if (targetEl) {
+        // Optional: fade out animation
+        targetEl.style.transition = 'opacity 0.3s ease-out';
+        targetEl.style.opacity = '0';
+        setTimeout(() => {
+          targetEl.remove();
+        }, 300);
+      }
+    }
   }
 }
 
