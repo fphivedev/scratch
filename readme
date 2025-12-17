@@ -1,3 +1,18 @@
-scratch repo
 
-Uploader("notes_document").SaveAs Server.MapPath("documents\" & appealsID & "\" & notes_documentID & "\") & "\" & Uploader.Fields("notes_document").FileName
+“Process improvement is important, and it will play a role in strengthening IT. But for process to actually deliver better outcomes, it has to sit on top of the right capability, the right structure, and the right level of empowerment. Otherwise, we risk formalising the delays we already experience.
+
+There are four practical options that would materially improve how IT delivers.
+
+Option A is Capability Uplift.
+We need to improve our recruitment pathways and selection criteria to attract and retain the technical skills we rely on. At the same time, establishing senior technical career pathways helps us grow capability internally rather than depending on a few individuals. And pairing our strongest technical SMEs with process specialists ensures that any process redesign reflects how the technology really works, not how we wish it worked.
+
+Option B is Reducing Internal Handoffs.
+A large portion of our delays come not from the work itself, but from the number of times it moves between teams—dev, ops, cyber, platform. By moving toward cross-functional product or service teams, and embedding specialists where the work is done, we reduce the queues. When teams own services end-to-end, throughput improves and accountability becomes clearer.
+
+Option C is Empowerment and Delegation.
+Many decisions currently escalate up the chain even when the expertise sits lower down. By delegating routine approvals to technical SMEs and reducing escalation layers, we can shorten cycle times significantly. With clear guardrails, engineers can make the right decisions quickly without compromising governance.
+
+Option D is Smarter Process, Not More Process.
+We can automate repetitive controls and redesign processes so they enable delivery rather than act as gates. The goal should be to remove queues, not just document them more thoroughly. Smarter, leaner processes will give us better outcomes with less effort.
+
+Taken together, these options strengthen capability, simplify how we work, and empower our people. Process improvement is part of the solution, but it only succeeds when it’s matched with capability uplift, reduced handoffs, and the right level of empowerment.”
