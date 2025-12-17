@@ -112,8 +112,8 @@ export function initModalForm() {
         submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Saving...';
 
         try {
-          // Build form data
-          const formData = new FormData();
+          // Build form data using URLSearchParams for Classic ASP compatibility
+          const formData = new URLSearchParams();
           formData.append(inputName, input.value);
 
           // Include any additional data from trigger
@@ -130,7 +130,10 @@ export function initModalForm() {
 
           const response = await fetch(postUrl, {
             method: 'POST',
-            body: formData,
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: formData.toString(),
             credentials: 'same-origin'
           });
 
